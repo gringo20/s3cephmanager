@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cephs3manager
+  namespace: default
+  labels:
+    app: cephs3manager
+spec:
+  replicas: 1           # NiceGUI uses in-memory session storage – keep at 1
+  selector:
+    matchLabels:
+      app: cephs3manager
+  template:
+    metadata:
+      labels:
+        app: cephs3manager
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: cephs3manager
+          image: cephs3manager-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DATA_DIR
+              value: /data
+            - name: APP_HOST
+              value: "0.0.0.0"
+            - name: APP_PORT
+              value: "8080"
+            - name: STORAGE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cephs3manager-secret
+                  key: storage-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cephs3manager-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cephs3manager-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard   # change to your StorageClass
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cephs3manager-secret
+  namespace: default
+type: Opaque
+stringData:
+  storage-secret: "change-me-in-production-super-secret-key-32chars"

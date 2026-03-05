@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cephs3manager
+  namespace: default
+  labels:
+    app: cephs3manager
+spec:
+  selector:
+    app: cephs3manager
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+
+---
+# Optional: Ingress (adjust host + ingressClassName for your cluster)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cephs3manager
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: s3manager.example.com   # ← change me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cephs3manager
+                port:
+                  number: 80
+  # tls:
+  #   - hosts:
+  #       - s3manager.example.com
+  #     secretName: cephs3manager-tls
