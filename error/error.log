@@ -1,131 +1,54 @@
-NiceGUI ready to go on http://localhost:8080, and http://10.42.7.76:8080
-2026-03-06T16:04:57 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
-2026-03-06T16:04:57 [INFO] cephs3mgr.main: Database initialised
-2026-03-06T16:05:18 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
-    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
-               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
-    return await self
-           ^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
-    self._obj = yield from self._coro.__await__()
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
-    f = await loop.run_in_executor(executor, cb)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
-    result = self.fn(*self.args, **self.kwargs)
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-2026-03-06T16:05:20 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
-    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
-               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
-    return await self
-           ^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
-    self._obj = yield from self._coro.__await__()
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
-    f = await loop.run_in_executor(executor, cb)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
-    result = self.fn(*self.args, **self.kwargs)
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-2026-03-06T16:05:20 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 85, in wrapper
-    return await awaitable
-           ^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
-    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
-               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
-    return await self
-           ^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
-    self._obj = yield from self._coro.__await__()
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
-    f = await loop.run_in_executor(executor, cb)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
-    result = self.fn(*self.args, **self.kwargs)
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-2026-03-06T16:05:28 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
-    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
-               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
-    return await self
-           ^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
-    self._obj = yield from self._coro.__await__()
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
-    f = await loop.run_in_executor(executor, cb)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
-    result = self.fn(*self.args, **self.kwargs)
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-2026-03-06T16:05:30 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
-    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
-               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
-    return await self
-           ^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
-    self._obj = yield from self._coro.__await__()
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
-    f = await loop.run_in_executor(executor, cb)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
-    result = self.fn(*self.args, **self.kwargs)
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
-2026-03-06T16:05:55 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-348' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'UploadEventArguments' object has no attribute 'name'")>
+NiceGUI ready to go on http://localhost:8080, and http://10.42.6.23:8080
+2026-03-06T16:21:48 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
+2026-03-06T16:21:48 [INFO] cephs3mgr.main: Database initialised
+2026-03-06T16:23:20 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1016' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\nThis may happen if you try to create UI from a background task.\nTo fix this, enter the target slot explicitly using `with container_element:`.')>
 Traceback (most recent call last):
   File "/app/app/pages/objects.py", line 330, in _flush_up
     await _handle_upload(evs, s3, bucket, state, modal,
                          up_list, up_list_placeholder,
                          table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 820, in _handle_upload
-    filename  = ev.name
-                ^^^^^^^
-AttributeError: 'UploadEventArguments' object has no attribute 'name'
-2026-03-06T16:06:46 [WARNING] cephs3mgr.rgw: RGW GET /admin/metadata/user → HTTP 403
-2026-03-06T16:07:12 [WARNING] cephs3mgr.rgw: RGW PUT /admin/user → HTTP 403
+  File "/app/app/pages/objects.py", line 862, in _handle_upload
+    timer = ui.timer(0.12, _poll_upload)
+  File "/usr/local/lib/python3.13/site-packages/nicegui/timer.py", line 35, in __init__
+    super().__init__()
+    ~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/element.py", line 59, in __init__
+    client = _client or context.client
+                        ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+2026-03-06T16:23:56 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1291' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\nThis may happen if you try to create UI from a background task.\nTo fix this, enter the target slot explicitly using `with container_element:`.')>
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 330, in _flush_up
+    await _handle_upload(evs, s3, bucket, state, modal,
+                         up_list, up_list_placeholder,
+                         table, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 862, in _handle_upload
+    timer = ui.timer(0.12, _poll_upload)
+  File "/usr/local/lib/python3.13/site-packages/nicegui/timer.py", line 35, in __init__
+    super().__init__()
+    ~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/element.py", line 59, in __init__
+    client = _client or context.client
+                        ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+2026-03-06T16:24:17 [WARNING] cephs3mgr.rgw: RGW GET /admin/metadata/user → HTTP 403
