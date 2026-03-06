@@ -124,7 +124,8 @@ class ProgressModal:
         self._cur_pct.set_text("0%")
         self._speed_lbl.set_text("")
         self._log.clear()
-        self._cancel_btn.set_text("Cancel").style(
+        self._cancel_btn.set_text("Cancel")
+        self._cancel_btn.style(
             "background:#da363322; color:#da3633; "
             "border:1px solid #da363344; border-radius:8px;"
         )
@@ -209,7 +210,8 @@ class ProgressModal:
         self._cur_pct.set_text("")
         self._speed_lbl.set_text("")
         # Change button
-        self._cancel_btn.set_text("Close").style(
+        self._cancel_btn.set_text("Close")
+        self._cancel_btn.style(
             "background:#1f6feb22; color:#58a6ff; "
             "border:1px solid #1f6feb44; border-radius:8px;"
         )
@@ -226,7 +228,8 @@ class ProgressModal:
 
     def _do_cancel(self) -> None:
         self._cancelled = True
-        self._cancel_btn.set_text("Cancelling…").style(
+        self._cancel_btn.set_text("Cancelling…")
+        self._cancel_btn.style(
             "background:#8b949e22; color:#8b949e; "
             "border:1px solid #8b949e44; border-radius:8px;"
         )

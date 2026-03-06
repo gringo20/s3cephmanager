@@ -25,7 +25,7 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY . .
 
-RUN mkdir -p /data && \
+RUN mkdir -p /data /app/.nicegui && \
     addgroup --system appgroup && \
     adduser  --system --ingroup appgroup appuser && \
     chown -R appuser:appgroup /app /data
