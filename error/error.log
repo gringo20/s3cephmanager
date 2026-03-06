@@ -1,179 +1,131 @@
-NiceGUI ready to go on http://localhost:8080, and http://10.42.5.194:8080
-2026-03-06T15:45:53 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
-2026-03-06T15:45:53 [INFO] cephs3mgr.main: Database initialised
-2026-03-06T15:46:17 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
+NiceGUI ready to go on http://localhost:8080, and http://10.42.7.76:8080
+2026-03-06T16:04:57 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
+2026-03-06T16:04:57 [INFO] cephs3mgr.main: Database initialised
+2026-03-06T16:05:18 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
 Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:46:19 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
+    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
+               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
+    self._obj = yield from self._coro.__await__()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
+    f = await loop.run_in_executor(executor, cb)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
+2026-03-06T16:05:20 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
 Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:46:19 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
+    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
+               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
+    self._obj = yield from self._coro.__await__()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
+    f = await loop.run_in_executor(executor, cb)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
+2026-03-06T16:05:20 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
 Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:47:11 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-340' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'NoneType' object has no attribute 'style'")>
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 85, in wrapper
+    return await awaitable
+           ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
+    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
+               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
+    self._obj = yield from self._coro.__await__()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
+    f = await loop.run_in_executor(executor, cb)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
+2026-03-06T16:05:28 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
 Traceback (most recent call last):
-  File "/app/app/pages/objects.py", line 330, in _flush_up
-    await _handle_upload(evs, s3, bucket, state, modal,
-                         up_list, up_list_placeholder,
-                         table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 809, in _handle_upload
-    modal.open(f"Uploading {total} file{'s' if total > 1 else ''}…")
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/components/progress_modal.py", line 127, in open
-    self._cancel_btn.set_text("Cancel").style(
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'style'
-2026-03-06T15:47:16 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-402' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'NoneType' object has no attribute 'style'")>
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
+    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
+               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
+    self._obj = yield from self._coro.__await__()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
+    f = await loop.run_in_executor(executor, cb)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
+2026-03-06T16:05:30 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
 Traceback (most recent call last):
-  File "/app/app/pages/objects.py", line 330, in _flush_up
-    await _handle_upload(evs, s3, bucket, state, modal,
-                         up_list, up_list_placeholder,
-                         table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 809, in _handle_upload
-    modal.open(f"Uploading {total} file{'s' if total > 1 else ''}…")
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/components/progress_modal.py", line 127, in open
-    self._cancel_btn.set_text("Cancel").style(
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'style'
-2026-03-06T15:47:24 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-1280' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'NoneType' object has no attribute 'style'")>
-Traceback (most recent call last):
-  File "/app/app/pages/objects.py", line 330, in _flush_up
-    await _handle_upload(evs, s3, bucket, state, modal,
-                         up_list, up_list_placeholder,
-                         table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 809, in _handle_upload
-    modal.open(f"Uploading {total} file{'s' if total > 1 else ''}…")
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/components/progress_modal.py", line 127, in open
-    self._cancel_btn.set_text("Cancel").style(
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'style'
-2026-03-06T15:48:11 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-1507' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'NoneType' object has no attribute 'style'")>
-Traceback (most recent call last):
-  File "/app/app/pages/objects.py", line 330, in _flush_up
-    await _handle_upload(evs, s3, bucket, state, modal,
-                         up_list, up_list_placeholder,
-                         table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 809, in _handle_upload
-    modal.open(f"Uploading {total} file{'s' if total > 1 else ''}…")
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/components/progress_modal.py", line 127, in open
-    self._cancel_btn.set_text("Cancel").style(
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'style'
-2026-03-06T15:48:12 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-1788' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'NoneType' object has no attribute 'style'")>
-Traceback (most recent call last):
-  File "/app/app/pages/objects.py", line 330, in _flush_up
-    await _handle_upload(evs, s3, bucket, state, modal,
-                         up_list, up_list_placeholder,
-                         table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 809, in _handle_upload
-    modal.open(f"Uploading {total} file{'s' if total > 1 else ''}…")
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/components/progress_modal.py", line 127, in open
-    self._cancel_btn.set_text("Cancel").style(
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'style'
-2026-03-06T15:49:16 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:49:29 [WARNING] cephs3mgr.rgw: RGW GET /admin/metadata/user → HTTP 403
-2026-03-06T15:50:07 [WARNING] cephs3mgr.rgw: RGW PUT /admin/user → HTTP 403
-2026-03-06T15:50:12 [WARNING] cephs3mgr.rgw: RGW PUT /admin/user → HTTP 403
-2026-03-06T15:50:13 [WARNING] cephs3mgr.rgw: RGW PUT /admin/user → HTTP 403
-2026-03-06T15:50:44 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:50:44 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:50:46 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:50:47 [ERROR] nicegui: [Errno 13] Permission denied: '/app/.nicegui'
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 448, in handle_event
-    result = cast(Callable[[], Any], handler)()
-  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 44, in backup
-    self.filepath.parent.mkdir(exist_ok=True)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/pathlib/_local.py", line 722, in mkdir
-    os.mkdir(self, mode)
-    ~~~~~~~~^^^^^^^^^^^^
-PermissionError: [Errno 13] Permission denied: '/app/.nicegui'
-2026-03-06T15:50:59 [ERROR] asyncio: Task exception was never retrieved
-future: <Task finished name='Task-2949' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'NoneType' object has no attribute 'style'")>
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/persistence/file_persistent_dict.py", line 48, in async_backup
+    async with aiofiles.open(self.filepath, 'w', encoding=self.encoding) as f:
+               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 73, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/base.py", line 69, in __await__
+    self._obj = yield from self._coro.__await__()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/aiofiles/threadpool/__init__.py", line 93, in _open
+    f = await loop.run_in_executor(executor, cb)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+PermissionError: [Errno 13] Permission denied: '/app/.nicegui/storage-user-45705860-1c1e-4732-a57d-52720a8c48e1.json'
+2026-03-06T16:05:55 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-348' coro=<objects_page.<locals>._flush_up() done, defined at /app/app/pages/objects.py:326> exception=AttributeError("'UploadEventArguments' object has no attribute 'name'")>
 Traceback (most recent call last):
   File "/app/app/pages/objects.py", line 330, in _flush_up
     await _handle_upload(evs, s3, bucket, state, modal,
                          up_list, up_list_placeholder,
                          table, tree_list, brow, dark)
-  File "/app/app/pages/objects.py", line 809, in _handle_upload
-    modal.open(f"Uploading {total} file{'s' if total > 1 else ''}…")
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/components/progress_modal.py", line 127, in open
-    self._cancel_btn.set_text("Cancel").style(
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'style'
+  File "/app/app/pages/objects.py", line 820, in _handle_upload
+    filename  = ev.name
+                ^^^^^^^
+AttributeError: 'UploadEventArguments' object has no attribute 'name'
+2026-03-06T16:06:46 [WARNING] cephs3mgr.rgw: RGW GET /admin/metadata/user → HTTP 403
+2026-03-06T16:07:12 [WARNING] cephs3mgr.rgw: RGW PUT /admin/user → HTTP 403
