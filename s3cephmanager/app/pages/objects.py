@@ -318,29 +318,17 @@ async def objects_page() -> None:
         with up_list:
             pass   # populated on upload
 
-        # Debounce multi-file selection: collect events for 250 ms, then
-        # hand them all to _handle_upload in a single batch.
-        _up_q: list = []
-        _up_t: list = [None]
-
-        async def _flush_up():
-            await asyncio.sleep(0.25)
-            evs = list(_up_q); _up_q.clear(); _up_t[0] = None
-            if evs:
-                await _handle_upload(evs, s3, bucket, state, modal,
-                                     up_list, up_list_placeholder,
-                                     table, tree_list, brow, dark)
-
-        def _on_upload_ev(e):
-            _up_q.append(e)
-            if _up_t[0] and not _up_t[0].done():
-                _up_t[0].cancel()
-            _up_t[0] = asyncio.ensure_future(_flush_up())
+        # NiceGUI 3.x: on_multi_upload fires once with ALL files in the correct
+        # slot context – no need for debounce queue or asyncio.ensure_future.
+        async def _on_multi_upload(e):
+            await _handle_upload(e.files, s3, bucket, state, modal,
+                                 up_list, up_list_placeholder,
+                                 table, tree_list, brow, dark)
 
         upload_widget = ui.upload(
             multiple=True,
             auto_upload=True,
-            on_upload=_on_upload_ev,
+            on_multi_upload=_on_multi_upload,
         ).props(
             f"dark color={'blue-6' if dark else 'primary'} flat "
             "label='Drop files here or click to browse'"
@@ -373,29 +361,19 @@ async def objects_page() -> None:
         with fup_list:
             pass
 
-        _fup_q: list = []
-        _fup_t: list = [None]
-
-        async def _flush_fup():
-            await asyncio.sleep(0.25)
-            evs = list(_fup_q); _fup_q.clear(); _fup_t[0] = None
-            if evs:
-                dst = {**state,
-                       "prefix": state["prefix"] + (fup_prefix_inp.value or "")}
-                await _handle_upload(evs, s3, bucket, dst, modal,
-                                     fup_list, fup_placeholder,
-                                     table, tree_list, brow, dark)
-
-        def _on_fup_ev(e):
-            _fup_q.append(e)
-            if _fup_t[0] and not _fup_t[0].done():
-                _fup_t[0].cancel()
-            _fup_t[0] = asyncio.ensure_future(_flush_fup())
+        # NiceGUI 3.x: on_multi_upload fires once with ALL files in the correct
+        # slot context – no need for debounce queue or asyncio.ensure_future.
+        async def _on_fup_multi_upload(e):
+            dst = {**state,
+                   "prefix": state["prefix"] + (fup_prefix_inp.value or "")}
+            await _handle_upload(e.files, s3, bucket, dst, modal,
+                                 fup_list, fup_placeholder,
+                                 table, tree_list, brow, dark)
 
         fup_widget = ui.upload(
             multiple=True,
             auto_upload=True,
-            on_upload=_on_fup_ev,
+            on_multi_upload=_on_fup_multi_upload,
         ).props(
             f"dark color={'blue-6' if dark else 'primary'} flat "
             "label='Drop files here or click to browse'"
@@ -793,7 +771,7 @@ def _render_breadcrumb(
 # ═════════════════════════════════════════════════════════════════════════════
 
 async def _handle_upload(
-    upload_events: list,          # list of UploadEventArguments
+    upload_files: list,           # list of FileUpload (NiceGUI 3.x MultiUploadEventArguments.files)
     s3, bucket: str,
     state: dict,                  # may have overridden prefix
     modal:         ProgressModal,
@@ -802,7 +780,7 @@ async def _handle_upload(
     table, tree_list, brow, dark: bool,
 ) -> None:
     """Sequentially upload one or more files with per-file progress."""
-    total = len(upload_events)
+    total = len(upload_files)
     if not total:
         return
 
@@ -813,12 +791,12 @@ async def _handle_upload(
     # Hide placeholder
     placeholder.set_visibility(False)
 
-    for idx, ev in enumerate(upload_events):
+    for idx, f in enumerate(upload_files):
         if modal.cancelled:
             break
 
-        filename  = ev.file.name
-        raw       = await ev.file.read()
+        filename  = f.name
+        raw       = await f.read()
         file_size = len(raw)
         dest_key  = state["prefix"] + filename
 
