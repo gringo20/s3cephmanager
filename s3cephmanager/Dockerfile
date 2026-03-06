@@ -17,6 +17,7 @@ LABEL org.opencontainers.image.description="Modern S3 + Ceph RGW admin tool"
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DATA_DIR=/data \
+    NICEGUI_STORAGE_PATH=/data/.nicegui \
     APP_HOST=0.0.0.0 \
     APP_PORT=8080
 

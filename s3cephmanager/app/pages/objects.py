@@ -817,8 +817,8 @@ async def _handle_upload(
         if modal.cancelled:
             break
 
-        filename  = ev.name
-        raw       = ev.content.read()
+        filename  = ev.file.name
+        raw       = await ev.file.read()
         file_size = len(raw)
         dest_key  = state["prefix"] + filename
 

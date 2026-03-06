@@ -6,6 +6,7 @@ metadata:
   namespace: default
 data:
   DATA_DIR: /data
+  NICEGUI_STORAGE_PATH: /data/.nicegui
   APP_HOST: "0.0.0.0"
   APP_PORT: "8080"
   DEFAULT_REGION: "us-east-1"
