@@ -18,9 +18,14 @@ import app.pages.users         # noqa: F401
 import app.pages.settings      # noqa: F401
 
 from app.database import init_db
-from app.config import APP_HOST, APP_PORT, STORAGE_SECRET, NICEGUI_STORAGE_PATH
+from app.config import APP_HOST, APP_PORT, STORAGE_SECRET, DATA_DIR
 
 log = logging.getLogger("cephs3mgr.main")
+
+# NiceGUI 3.x stores session data in .nicegui relative to cwd.
+# Change cwd to DATA_DIR (/data in container, ~/.cephs3mgr in dev)
+# so it writes to a writable volume instead of /app (read-only for appuser).
+os.chdir(str(DATA_DIR))
 
 
 @ng_app.on_startup
@@ -86,7 +91,6 @@ ui.run(
     host=APP_HOST,
     port=APP_PORT,
     storage_secret=STORAGE_SECRET,
-    storage_path=str(NICEGUI_STORAGE_PATH),
     favicon="🪣",
     tailwind=True,
     reload=os.getenv("DEV_RELOAD", "false").lower() == "true",

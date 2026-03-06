@@ -30,8 +30,6 @@ DATA_DIR = _default_data_dir()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = DATA_DIR / "cephs3mgr.db"
-NICEGUI_STORAGE_PATH = DATA_DIR / ".nicegui"
-NICEGUI_STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8080"))
