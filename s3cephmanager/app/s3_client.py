@@ -62,9 +62,21 @@ class ProgressCallback:
 
 class S3Manager:
     def __init__(self, endpoint: str, access_key: str, secret_key: str,
-                 region: str = "us-east-1", verify_ssl: bool = True):
+                 region: str = "us-east-1", verify_ssl: bool = True,
+                 public_endpoint: str = ""):
         log.debug("S3Manager connecting to %s (region=%s, ssl=%s)", endpoint, region, verify_ssl)
         self.client = _make_client(endpoint, access_key, secret_key, region, verify_ssl)
+        # Separate boto3 client for presigned URL generation.
+        # If a public/external endpoint is set, presigned URLs will contain
+        # the public hostname so they can be opened by browsers outside k8s.
+        # A separate client is required because SigV4 signs the Host header;
+        # simply replacing the URL after signing would invalidate the signature.
+        _pub = (public_endpoint or "").strip()
+        if _pub and _pub.rstrip("/") != endpoint.rstrip("/"):
+            log.debug("S3Manager presign client → %s", _pub)
+            self._presign_client = _make_client(_pub, access_key, secret_key, region, verify_ssl)
+        else:
+            self._presign_client = self.client
         self._transfer_config = boto3.s3.transfer.TransferConfig(
             multipart_threshold=MULTIPART_THRESHOLD,
             multipart_chunksize=MULTIPART_CHUNKSIZE,
@@ -180,14 +192,14 @@ class S3Manager:
         )
 
     def presigned_url(self, bucket: str, key: str, expiry: int = 3600) -> str:
-        return self.client.generate_presigned_url(
+        return self._presign_client.generate_presigned_url(
             "get_object",
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=expiry,
         )
 
     def presigned_upload_url(self, bucket: str, key: str, expiry: int = 3600) -> str:
-        return self.client.generate_presigned_url(
+        return self._presign_client.generate_presigned_url(
             "put_object",
             Params={"Bucket": bucket, "Key": key},
             ExpiresIn=expiry,
@@ -312,4 +324,5 @@ def get_s3_from_conn(conn: dict) -> S3Manager:
         secret_key=conn["secret_key"],
         region=conn.get("region", "us-east-1"),
         verify_ssl=conn.get("verify_ssl", True),
+        public_endpoint=conn.get("public_endpoint", "") or "",
     )

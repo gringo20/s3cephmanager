@@ -64,6 +64,11 @@ async def connections_page() -> None:
                 "Admin Endpoint (optional)", "https://s3.example.com",
                 inp_sty, dark, span=1
             )
+            form["pub_ep"] = _labeled_input(
+                "Public Download URL (optional)",
+                "https://s3-public.example.com",
+                inp_sty, dark, span=2   # full width — URL can be long
+            )
 
         # Checkboxes row
         with ui.row().style("gap:20px; margin-top:12px; align-items:center;"):
@@ -268,7 +273,7 @@ def _labeled_input(
 def _open_add_dialog(dialog, form: dict) -> None:
     """Clear form and open in Create mode."""
     form.get("name") and form["name"].set_value("")
-    for key in ("ep", "ak", "sk", "admin_ep"):
+    for key in ("ep", "ak", "sk", "admin_ep", "pub_ep"):
         form.get(key) and form[key].set_value("")
     form.get("region")     and form["region"].set_value("us-east-1")
     form.get("admin_mode") and form["admin_mode"].set_value(False)
@@ -286,6 +291,7 @@ def _open_edit_dialog(conn: dict, dialog, form: dict) -> None:
     form["sk"].set_value(conn["secret_key"])
     form["region"].set_value(conn.get("region", "us-east-1"))
     form["admin_ep"].set_value(conn.get("admin_endpoint") or "")
+    form["pub_ep"].set_value(conn.get("public_endpoint") or "")
     form["admin_mode"].set_value(bool(conn.get("admin_mode", False)))
     form["verify_ssl"].set_value(bool(conn.get("verify_ssl", True)))
     form.get("status") and form["status"].set_text("")
@@ -329,6 +335,7 @@ async def _save(dialog, cards: ui.column, form: dict, dark: bool,
     sk      = form["sk"].value.strip()
     region  = form["region"].value.strip() or "us-east-1"
     adm_ep  = form["admin_ep"].value.strip() or None
+    pub_ep  = form["pub_ep"].value.strip() or None
     adm_mode = form["admin_mode"].value
     ssl     = form["verify_ssl"].value
 
@@ -342,6 +349,7 @@ async def _save(dialog, cards: ui.column, form: dict, dark: bool,
             await models.save_connection({
                 "name": name, "endpoint": ep, "access_key": ak, "secret_key": sk,
                 "region": region, "admin_endpoint": adm_ep,
+                "public_endpoint": pub_ep,
                 "admin_mode": adm_mode, "verify_ssl": ssl,
             })
             ui.notify(f"'{name}' saved.", type="positive")
@@ -349,6 +357,7 @@ async def _save(dialog, cards: ui.column, form: dict, dark: bool,
             await models.update_connection(edit_id, {
                 "name": name, "endpoint": ep, "access_key": ak, "secret_key": sk,
                 "region": region, "admin_endpoint": adm_ep,
+                "public_endpoint": pub_ep,
                 "admin_mode": adm_mode, "verify_ssl": ssl,
             })
             # Update active session if editing the current connection

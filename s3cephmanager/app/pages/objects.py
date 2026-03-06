@@ -856,12 +856,14 @@ async def _handle_upload(
         timer.active = False
 
         if done["error"]:
-            file_ico.set_name("error").style("color:#da3633;")
+            file_ico.set_name("error")
+            file_ico.style("color:#da3633;")
             file_pct_lbl.set_text("✗")
             modal.add_log_entry(filename, "error", done["error"])
             err += 1
         else:
-            file_ico.set_name("check_circle").style("color:#2ea043;")
+            file_ico.set_name("check_circle")
+            file_ico.style("color:#2ea043;")
             file_pct_lbl.set_text("✓")
             modal.add_log_entry(
                 filename, "ok",

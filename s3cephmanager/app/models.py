@@ -14,8 +14,9 @@ class Connection(Base):
     access_key     = Column(String(200), nullable=False)
     secret_key     = Column(String(200), nullable=False)
     region         = Column(String(100), default="us-east-1")
-    admin_endpoint = Column(String(500), nullable=True)
-    admin_mode     = Column(Boolean, default=False)   # enables RGW Admin API / user tab
+    admin_endpoint   = Column(String(500), nullable=True)
+    public_endpoint  = Column(String(500), nullable=True)   # external URL for presigned download links
+    admin_mode       = Column(Boolean, default=False)   # enables RGW Admin API / user tab
     verify_ssl     = Column(Boolean, default=True)
     is_last_used   = Column(Boolean, default=False)
     created_at     = Column(DateTime, default=datetime.utcnow)
@@ -28,8 +29,9 @@ class Connection(Base):
             "access_key":     self.access_key,
             "secret_key":     self.secret_key,
             "region":         self.region,
-            "admin_endpoint": self.admin_endpoint,
-            "admin_mode":     bool(self.admin_mode),
+            "admin_endpoint":  self.admin_endpoint,
+            "public_endpoint": self.public_endpoint,
+            "admin_mode":      bool(self.admin_mode),
             "verify_ssl":     bool(self.verify_ssl),
             "is_last_used":   bool(self.is_last_used),
         }
@@ -65,7 +67,7 @@ async def save_connection(data: dict) -> dict:
 
 async def update_connection(conn_id: int, data: dict) -> Optional[dict]:
     _allowed = {"name", "endpoint", "access_key", "secret_key",
-                "region", "admin_endpoint", "admin_mode", "verify_ssl"}
+                "region", "admin_endpoint", "public_endpoint", "admin_mode", "verify_ssl"}
     async with AsyncSessionLocal() as db:
         c = await db.get(Connection, conn_id)
         if not c:

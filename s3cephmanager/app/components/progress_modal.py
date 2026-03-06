@@ -27,6 +27,7 @@ class ProgressModal:
     def __init__(self, dark: bool) -> None:
         self.dark       = dark
         self._cancelled = False
+        self._done      = False   # True after set_done() — makes button act as Close
 
         bg  = "#161b22" if dark else "#ffffff"
         bdr = "#21262d" if dark else "#d0d7de"
@@ -115,6 +116,7 @@ class ProgressModal:
     def open(self, title: str) -> None:
         """Reset state and open the modal."""
         self._cancelled  = False
+        self._done       = False
         self._title.set_text(title)
         self._status_icon.set_text("⏳")
         self._total_bar.set_value(0)
@@ -209,13 +211,13 @@ class ProgressModal:
         self._cur_bar.set_value(0)
         self._cur_pct.set_text("")
         self._speed_lbl.set_text("")
-        # Change button
+        # Change button to Close — _do_cancel checks _done and closes instead
+        self._done = True
         self._cancel_btn.set_text("Close")
         self._cancel_btn.style(
             "background:#1f6feb22; color:#58a6ff; "
             "border:1px solid #1f6feb44; border-radius:8px;"
         )
-        self._cancel_btn.on("click", self.close)   # rebind
 
     def set_title(self, title: str) -> None:
         self._title.set_text(title)
@@ -227,6 +229,10 @@ class ProgressModal:
     # ── Internal ──────────────────────────────────────────────────────────────
 
     def _do_cancel(self) -> None:
+        # After upload is done this button acts as "Close"
+        if self._done:
+            self._dlg.close()
+            return
         self._cancelled = True
         self._cancel_btn.set_text("Cancelling…")
         self._cancel_btn.style(
