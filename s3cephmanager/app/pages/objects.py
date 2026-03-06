@@ -279,9 +279,11 @@ async def objects_page() -> None:
                      ))
 
             # ── Load More button (shown only when results are truncated) ───────
+            # NOTE: .set_visibility() returns None in NiceGUI 3.x — must not chain
             load_more_row = ui.row().style(
                 "justify-content:center; width:100%; padding:8px 0;"
-            ).set_visibility(False)
+            )
+            load_more_row.set_visibility(False)
             state["load_more_ref"] = load_more_row
             with load_more_row:
                 ui.button(

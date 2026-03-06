@@ -18,7 +18,7 @@ import app.pages.users         # noqa: F401
 import app.pages.settings      # noqa: F401
 
 from app.database import init_db
-from app.config import APP_HOST, APP_PORT, STORAGE_SECRET
+from app.config import APP_HOST, APP_PORT, STORAGE_SECRET, NICEGUI_STORAGE_PATH
 
 log = logging.getLogger("cephs3mgr.main")
 
@@ -86,6 +86,7 @@ ui.run(
     host=APP_HOST,
     port=APP_PORT,
     storage_secret=STORAGE_SECRET,
+    storage_path=str(NICEGUI_STORAGE_PATH),
     favicon="🪣",
     tailwind=True,
     reload=os.getenv("DEV_RELOAD", "false").lower() == "true",
