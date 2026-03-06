@@ -132,9 +132,7 @@ async def objects_page() -> None:
                     ))
                     ui.button(
                         icon="refresh",
-                        on_click=lambda: asyncio.ensure_future(
-                            _reload(table, tree_list, brow, s3, bucket, state, dark)
-                        ),
+                        on_click=lambda: _reload(table, tree_list, brow, s3, bucket, state, dark),
                     ).props("flat round").style(f"color:{C['mut']};")
 
             # Breadcrumb (re-rendered on every navigate)
@@ -162,26 +160,20 @@ async def objects_page() -> None:
                     ).on("click", lambda: folder_upload_dlg.open())
 
                 _tb_btn("download", "Download",
-                        lambda: asyncio.ensure_future(
-                            _download_selected(s3, bucket, state, dark)
-                        ), C)
+                        lambda: _download_selected(s3, bucket, state, dark), C)
                 _tb_btn("content_copy", "Copy",
                         lambda: _open_copy_dlg(
                             copy_dlg, copy_dst_inp, copy_err, state, C
                         ), C)
                 _tb_btn("delete", "Delete Selected",
-                        lambda: asyncio.ensure_future(
-                            _bulk_delete(s3, bucket, state, modal,
-                                         table, tree_list, brow, dark)
-                        ), C, danger=True)
+                        lambda: _bulk_delete(s3, bucket, state, modal,
+                                             table, tree_list, brow, dark), C, danger=True)
                 _tb_btn("create_new_folder", "New Folder",
                         lambda: folder_dlg.open(), C)
                 _tb_btn("swap_horiz", "Copy to Bucket",
-                        lambda: asyncio.ensure_future(
-                            _open_xbucket_dlg(
-                                xbucket_dlg, xb_bucket_sel, xb_prefix_inp,
-                                xb_info, xb_err, state, s3, conn,
-                            )
+                        lambda: _open_xbucket_dlg(
+                            xbucket_dlg, xb_bucket_sel, xb_prefix_inp,
+                            xb_info, xb_err, state, s3, conn,
                         ), C)
 
             # ── Object table ──────────────────────────────────────────────────
@@ -278,10 +270,8 @@ async def objects_page() -> None:
             table.on("presign",
                      lambda e: _pre_presign(e.args, presign_dlg, presign_key, presign_url))
             table.on("del_one",
-                     lambda e: asyncio.ensure_future(
-                         _delete_one(s3, bucket, e.args, modal,
-                                     table, tree_list, brow, state, dark)
-                     ))
+                     lambda e: _delete_one(s3, bucket, e.args, modal,
+                                           table, tree_list, brow, state, dark))
             table.on("selection",
                      lambda e: state.update(
                          {"selected": [r["key"] for r in e.args.get("rows", [])
@@ -296,10 +286,8 @@ async def objects_page() -> None:
             with load_more_row:
                 ui.button(
                     "Load More", icon="expand_more",
-                    on_click=lambda: asyncio.ensure_future(
-                        _load_more(table, tree_list, brow, load_more_row,
-                                   s3, bucket, state, dark, state["page_size"])
-                    ),
+                    on_click=lambda: _load_more(table, tree_list, brow, load_more_row,
+                                               s3, bucket, state, dark, state["page_size"]),
                 ).props("no-caps flat").style(
                     f"color:{C['blue']}; border:1px solid {C['bdr']}; "
                     "border-radius:8px; font-size:0.82rem;"
@@ -423,11 +411,9 @@ async def objects_page() -> None:
         folder_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(folder_dlg, dark)
-            _primary_btn("Create", lambda: asyncio.ensure_future(
-                _create_folder(s3, bucket, state, folder_inp.value,
-                               folder_dlg, folder_err,
-                               table, tree_list, brow, dark)
-            ))
+            _primary_btn("Create", lambda: _create_folder(s3, bucket, state, folder_inp.value,
+                                                           folder_dlg, folder_err,
+                                                           table, tree_list, brow, dark))
 
     # ── 4. Rename / Move ───────────────────────────────────────────────────────
     with ui.dialog() as rename_dlg, _dlg_card(dark):
@@ -440,11 +426,9 @@ async def objects_page() -> None:
         rename_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(rename_dlg, dark)
-            _primary_btn("Rename", lambda: asyncio.ensure_future(
-                _rename(s3, bucket, state, rename_src.text, rename_inp.value,
-                        rename_dlg, rename_err, modal,
-                        table, tree_list, brow, dark)
-            ))
+            _primary_btn("Rename", lambda: _rename(s3, bucket, state, rename_src.text, rename_inp.value,
+                                                    rename_dlg, rename_err, modal,
+                                                    table, tree_list, brow, dark))
 
     # ── 5. Copy ────────────────────────────────────────────────────────────────
     _copy_keys: list[str] = []   # mutable cell for lambda capture
@@ -461,11 +445,9 @@ async def objects_page() -> None:
         copy_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(copy_dlg, dark)
-            _primary_btn("Copy", lambda: asyncio.ensure_future(
-                _copy_objects(s3, bucket, _copy_keys,
-                              copy_dst_inp.value, copy_dlg, copy_err,
-                              modal, table, tree_list, brow, state, dark)
-            ))
+            _primary_btn("Copy", lambda: _copy_objects(s3, bucket, _copy_keys,
+                                                        copy_dst_inp.value, copy_dlg, copy_err,
+                                                        modal, table, tree_list, brow, state, dark))
 
     # ── 6. Cross-bucket copy ───────────────────────────────────────────────────
     _xb_keys: list[str] = []
@@ -485,13 +467,11 @@ async def objects_page() -> None:
         xb_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(xbucket_dlg, dark)
-            _primary_btn("Copy", lambda: asyncio.ensure_future(
-                _xbucket_copy(
-                    s3, bucket, _xb_keys,
-                    xb_bucket_sel.value or "",
-                    xb_prefix_inp.value or "",
-                    xbucket_dlg, xb_err, modal, dark,
-                )
+            _primary_btn("Copy", lambda: _xbucket_copy(
+                s3, bucket, _xb_keys,
+                xb_bucket_sel.value or "",
+                xb_prefix_inp.value or "",
+                xbucket_dlg, xb_err, modal, dark,
             ))
 
     # ── 7. Presigned URL ───────────────────────────────────────────────────────

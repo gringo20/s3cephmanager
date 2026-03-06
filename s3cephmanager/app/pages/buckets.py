@@ -56,7 +56,7 @@ async def buckets_page() -> None:
                 ).style(_inp(dark))
                 ui.button(
                     icon="refresh",
-                    on_click=lambda: asyncio.ensure_future(_reload(table, stats_row, s3, dark)),
+                    on_click=lambda: _reload(table, stats_row, s3, dark),
                 ).props("flat round").style(f"color:{mut};")
                 ui.button(
                     "＋ Create Bucket",
@@ -143,9 +143,7 @@ async def buckets_page() -> None:
         table.on("delete", lambda e: _open_delete(
             e.args, delete_dlg, del_name_lbl, del_err
         ))
-        table.on("bucket_settings", lambda e: asyncio.ensure_future(
-            _open_bucket_settings(e.args, bucket_dlg, bkt_ctx, s3, dark)
-        ))
+        table.on("bucket_settings", lambda e: _open_bucket_settings(e.args, bucket_dlg, bkt_ctx, s3, dark))
 
         # Filter
         search.on("input", lambda e: table.run_method(
@@ -162,10 +160,8 @@ async def buckets_page() -> None:
             _cancel_btn(create_dlg, dark)
             _primary_btn(
                 "Create",
-                lambda: asyncio.ensure_future(
-                    _create(s3, f_name.value, f_region.value,
-                            create_dlg, table, stats_row, err_create, dark)
-                ),
+                lambda: _create(s3, f_name.value, f_region.value,
+                                create_dlg, table, stats_row, err_create, dark),
             )
 
     # ── Delete dialog ─────────────────────────────────────────────────────────
@@ -183,10 +179,8 @@ async def buckets_page() -> None:
             _cancel_btn(delete_dlg, dark)
             ui.button("Delete", color="red").props("no-caps").style(
                 "color:#fff; border-radius:8px; font-weight:600;"
-            ).on("click", lambda: asyncio.ensure_future(
-                _delete(s3, _del_state["name"], del_force.value,
-                        delete_dlg, table, stats_row, del_err, dark)
-            ))
+            ).on("click", lambda: _delete(s3, _del_state["name"], del_force.value,
+                                           delete_dlg, table, stats_row, del_err, dark))
 
     # ── Bucket Settings dialog (Policy / CORS / Versioning) ───────────────────
     bkt_ctx: dict = {}
@@ -242,14 +236,10 @@ async def buckets_page() -> None:
                     "color:#da3633; font-size:0.8rem; min-height:18px;"
                 )
                 with ui.row().style("gap:8px; margin-top:10px;"):
-                    ui.button("Save Policy", icon="save", on_click=lambda: asyncio.ensure_future(
-                        _save_policy(s3, bkt_ctx, dark)
-                    )).props("no-caps").style(
+                    ui.button("Save Policy", icon="save", on_click=lambda: _save_policy(s3, bkt_ctx, dark)).props("no-caps").style(
                         "background:#1f6feb; color:#fff; border-radius:8px; font-weight:600;"
                     )
-                    ui.button("Delete Policy", icon="delete", on_click=lambda: asyncio.ensure_future(
-                        _delete_policy(s3, bkt_ctx, dark)
-                    )).props("no-caps flat").style(
+                    ui.button("Delete Policy", icon="delete", on_click=lambda: _delete_policy(s3, bkt_ctx, dark)).props("no-caps flat").style(
                         f"color:#da3633;"
                     )
 
@@ -305,14 +295,10 @@ async def buckets_page() -> None:
                     "color:#da3633; font-size:0.8rem; min-height:18px;"
                 )
                 with ui.row().style("gap:8px; margin-top:4px;"):
-                    ui.button("Add Rule", icon="add", on_click=lambda: asyncio.ensure_future(
-                        _add_cors_rule(s3, bkt_ctx, dark)
-                    )).props("no-caps").style(
+                    ui.button("Add Rule", icon="add", on_click=lambda: _add_cors_rule(s3, bkt_ctx, dark)).props("no-caps").style(
                         "background:#1f6feb; color:#fff; border-radius:8px; font-weight:600;"
                     )
-                    ui.button("Delete All CORS", icon="delete", on_click=lambda: asyncio.ensure_future(
-                        _delete_cors(s3, bkt_ctx, dark)
-                    )).props("no-caps flat").style("color:#da3633;")
+                    ui.button("Delete All CORS", icon="delete", on_click=lambda: _delete_cors(s3, bkt_ctx, dark)).props("no-caps flat").style("color:#da3633;")
 
             # ── Versioning tab ────────────────────────────────────────────
             with ui.tab_panel(btab_ver):
@@ -338,15 +324,11 @@ async def buckets_page() -> None:
                 )
                 with ui.row().style("gap:8px;"):
                     ui.button("Enable Versioning", icon="check_circle",
-                              on_click=lambda: asyncio.ensure_future(
-                                  _set_versioning(s3, bkt_ctx, "Enabled", dark)
-                              )).props("no-caps").style(
+                              on_click=lambda: _set_versioning(s3, bkt_ctx, "Enabled", dark)).props("no-caps").style(
                         "background:#2ea043; color:#fff; border-radius:8px; font-weight:600;"
                     )
                     ui.button("Suspend Versioning", icon="pause_circle",
-                              on_click=lambda: asyncio.ensure_future(
-                                  _set_versioning(s3, bkt_ctx, "Suspended", dark)
-                              )).props("no-caps flat").style(
+                              on_click=lambda: _set_versioning(s3, bkt_ctx, "Suspended", dark)).props("no-caps flat").style(
                         "color:#e36209;"
                     )
 

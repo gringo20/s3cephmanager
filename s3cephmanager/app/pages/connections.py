@@ -91,18 +91,14 @@ async def connections_page() -> None:
             )
             ui.button(
                 "Test Connection",
-                on_click=lambda: asyncio.ensure_future(
-                    _test_conn(form, dark)
-                ),
+                on_click=lambda: _test_conn(form, dark),
             ).props("no-caps").style(
                 f"background:{'#21262d' if dark else '#f6f8fa'}; "
                 f"color:{txt_col}; border-radius:8px;"
             )
             ui.button(
                 "Save",
-                on_click=lambda: asyncio.ensure_future(
-                    _save(dialog, cards, form, dark, conns_ref)
-                ),
+                on_click=lambda: _save(dialog, cards, form, dark, conns_ref),
             ).props("no-caps").style(
                 "background:#1f6feb; color:#fff; border-radius:8px; font-weight:600;"
             )
@@ -227,14 +223,12 @@ def _conn_card(
 
                 ui.button(
                     icon="delete",
-                    on_click=lambda cid=c["id"]: asyncio.ensure_future(
-                        _delete(cid, container, dark, dialog, form)
-                    ),
+                    on_click=lambda cid=c["id"]: _delete(cid, container, dark, dialog, form),
                 ).props("flat round dense").style("color:#da3633;")
 
                 ui.button(
                     "Connect →",
-                    on_click=lambda conn=c: asyncio.ensure_future(_connect(conn)),
+                    on_click=lambda conn=c: _connect(conn),
                 ).props("no-caps").style(
                     "background:#1f6feb; color:#fff; border-radius:8px; "
                     "padding:6px 14px; font-weight:600; font-size:0.82rem;"

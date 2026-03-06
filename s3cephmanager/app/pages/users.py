@@ -94,9 +94,7 @@ async def users_page() -> None:
                 ).style(_inp(dark) + "width:180px;")
                 ui.button(
                     icon="refresh",
-                    on_click=lambda: asyncio.ensure_future(
-                        _reload(table, stats_row, rgw, dark)
-                    ),
+                    on_click=lambda: _reload(table, stats_row, rgw, dark),
                 ).props("flat round").style(f"color:{C['mut']};")
                 ui.button(
                     "＋ Create User",
@@ -192,9 +190,7 @@ async def users_page() -> None:
             </q-td>
         """)
 
-        table.on("detail",     lambda e: asyncio.ensure_future(
-            _open_detail(e.args, detail_dlg, detail_ctx, rgw, dark)
-        ))
+        table.on("detail",     lambda e: _open_detail(e.args, detail_dlg, detail_ctx, rgw, dark))
         table.on("toggle_sus", lambda e: _open_suspend_dlg(
             e.args, suspend_dlg, sus_uid_lbl, sus_action_lbl, _sus_state
         ))
@@ -224,13 +220,11 @@ async def users_page() -> None:
         create_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:14px;"):
             _cancel_btn(create_dlg, dark)
-            _primary_btn("Create", lambda: asyncio.ensure_future(
-                _create_user(
-                    rgw,
-                    cf_uid.value, cf_name.value, cf_email.value,
-                    int(cf_maxb.value or 1000), cf_genkey.value,
-                    create_dlg, create_err, table, stats_row, dark,
-                )
+            _primary_btn("Create", lambda: _create_user(
+                rgw,
+                cf_uid.value, cf_name.value, cf_email.value,
+                int(cf_maxb.value or 1000), cf_genkey.value,
+                create_dlg, create_err, table, stats_row, dark,
             ))
 
     # ── 2. User Detail dialog ──────────────────────────────────────────────────
@@ -277,9 +271,7 @@ async def users_page() -> None:
                     _inp(dark) + "width:100%; margin-bottom:10px;"
                 )
                 detail_ctx["info_err"] = _dlg_err()
-                _primary_btn("Save Changes", lambda: asyncio.ensure_future(
-                    _save_user_info(rgw, detail_ctx, table, stats_row, dark)
-                ))
+                _primary_btn("Save Changes", lambda: _save_user_info(rgw, detail_ctx, table, stats_row, dark))
 
             # ── Keys tab
             with ui.tab_panel(dtab_keys):
@@ -289,9 +281,7 @@ async def users_page() -> None:
                 with ui.row().style(
                     "justify-content:flex-end; margin-top:14px;"
                 ):
-                    _primary_btn("＋ Add Key", lambda: asyncio.ensure_future(
-                        _add_key(rgw, detail_ctx, new_key_dlg, dark)
-                    ))
+                    _primary_btn("＋ Add Key", lambda: _add_key(rgw, detail_ctx, new_key_dlg, dark))
 
             # ── Quota tab
             with ui.tab_panel(dtab_quota):
@@ -314,9 +304,7 @@ async def users_page() -> None:
                     _inp(dark) + "width:100%; margin-bottom:10px;"
                 )
                 detail_ctx["q_err"] = _dlg_err()
-                _primary_btn("Save Quota", lambda: asyncio.ensure_future(
-                    _save_quota(rgw, detail_ctx, dark)
-                ))
+                _primary_btn("Save Quota", lambda: _save_quota(rgw, detail_ctx, dark))
 
             # ── Usage tab
             with ui.tab_panel(dtab_usage):
@@ -325,9 +313,7 @@ async def users_page() -> None:
                 )
                 ui.button(
                     "Refresh Stats", icon="refresh",
-                    on_click=lambda: asyncio.ensure_future(
-                        _load_usage(rgw, detail_ctx, dark)
-                    ),
+                    on_click=lambda: _load_usage(rgw, detail_ctx, dark),
                 ).props("flat no-caps").style(
                     f"color:{C['mut']}; font-size:0.82rem; margin-top:10px;"
                 )
@@ -368,11 +354,9 @@ async def users_page() -> None:
             _cancel_btn(suspend_dlg, dark)
             ui.button("Confirm").props("no-caps").style(
                 "background:#e36209; color:#fff; border-radius:8px; font-weight:600;"
-            ).on("click", lambda: asyncio.ensure_future(
-                _do_suspend(
-                    rgw, _sus_state["uid"], _sus_state["do_suspend"],
-                    suspend_dlg, table, stats_row, dark,
-                )
+            ).on("click", lambda: _do_suspend(
+                rgw, _sus_state["uid"], _sus_state["do_suspend"],
+                suspend_dlg, table, stats_row, dark,
             ))
 
     # ── 5. Delete confirm ──────────────────────────────────────────────────────
@@ -390,11 +374,9 @@ async def users_page() -> None:
             _cancel_btn(del_dlg, dark)
             ui.button("Delete", color="red").props("no-caps").style(
                 "color:#fff; border-radius:8px; font-weight:600;"
-            ).on("click", lambda: asyncio.ensure_future(
-                _do_delete(
-                    rgw, _del_state["uid"], del_purge.value,
-                    del_dlg, del_err, table, stats_row, dark,
-                )
+            ).on("click", lambda: _do_delete(
+                rgw, _del_state["uid"], del_purge.value,
+                del_dlg, del_err, table, stats_row, dark,
             ))
 
     # ── Helper closures (need dialog refs) ────────────────────────────────────
@@ -621,9 +603,7 @@ def _key_card(
                     "flat round dense"
                 ).style("color:#da3633; font-size:0.8rem;").on(
                     "click",
-                    lambda a=ak: asyncio.ensure_future(
-                        _delete_key(rgw, uid, a, ctx, dark)
-                    ),
+                    lambda a=ak: _delete_key(rgw, uid, a, ctx, dark),
                 )
 
 
