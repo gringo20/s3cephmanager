@@ -193,11 +193,14 @@ async def objects_page() -> None:
                 rows=[],
                 row_key="key",
                 selection="multiple",
-                pagination={"rowsPerPage": 50, "sortBy": "name"},
+                pagination={"rowsPerPage": 25, "sortBy": "name"},
             ).style(
                 f"background:{C['tbg']}; border:1px solid {C['bdr']}; "
                 "border-radius:10px; width:100%;"
-            ).props("flat dark" if dark else "flat")
+            ).props(
+                ('flat dark' if dark else 'flat') +
+                ' :rows-per-page-options="[10, 25, 50, 100]"'
+            )
 
             # ── Slots ──────────────────────────────────────────────────────────
 
@@ -1353,11 +1356,54 @@ async def _show_preview(
 
         # ── PDF ───────────────────────────────────────────────────────────────
         elif ext in _PREVIEW_PDF_EXTS:
-            ui.html(
-                f'<iframe src="{url}" '
-                f'style="width:100%; height:68vh; border:none; '
-                f'border-radius:8px;"></iframe>'
+            # Fetch server-side to avoid cross-origin iframe blocks.
+            # Browsers often refuse to embed S3 presigned URLs in iframes
+            # due to X-Frame-Options / CSP headers on the storage backend.
+            # Embedding as a base64 data URI sidesteps this completely.
+            status_col = ui.column().style(
+                "width:100%; align-items:center; padding:52px 0; gap:10px;"
             )
+            with status_col:
+                ui.spinner("dots", size="xl").style(
+                    f"color:{'#58a6ff' if dark else '#0969da'};"
+                )
+                ui.label("Loading PDF…").style(
+                    f"color:{C['mut']}; font-size:0.82rem;"
+                )
+            try:
+                resp = await loop.run_in_executor(
+                    None, lambda: _requests.get(url, timeout=30, verify=False)
+                )
+                resp.raise_for_status()
+                pdf_bytes = resp.content
+                _MAX_PDF = 20 * 1024 * 1024   # 20 MB inline limit
+                status_col.clear()
+                with status_col:
+                    if len(pdf_bytes) > _MAX_PDF:
+                        ui.icon("picture_as_pdf").style(
+                            f"font-size:3rem; color:{C['mut']};"
+                        )
+                        ui.label(
+                            f"PDF too large for inline preview "
+                            f"({humanize.naturalsize(len(pdf_bytes))})."
+                        ).style(f"color:{C['mut']}; font-size:0.88rem;")
+                        ui.label(
+                            "Use the Download button to open it."
+                        ).style(f"color:{C['mut']}; font-size:0.78rem;")
+                    else:
+                        import base64 as _b64
+                        b64 = _b64.b64encode(pdf_bytes).decode()
+                        ui.html(
+                            f'<iframe src="data:application/pdf;base64,{b64}" '
+                            f'style="width:100%; height:68vh; border:none; '
+                            f'border-radius:8px;"></iframe>'
+                        )
+            except Exception as exc:
+                status_col.clear()
+                with status_col:
+                    ui.label(f"⚠ Could not load PDF: {exc}").style(
+                        "color:#da3633; font-size:0.82rem;"
+                    )
 
         # ── Video ─────────────────────────────────────────────────────────────
         elif ext in _PREVIEW_VIDEO_EXTS:
