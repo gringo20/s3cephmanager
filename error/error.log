@@ -1,90 +1,201 @@
-
-[e.cauca@DevOps-admins ~]$ kubectl exec -n s3manager -it deploy/cephs3manager -- python3 -c "
-import requests
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
-from botocore.credentials import Credentials
-
-# ← pune credențialele din Secret
-ACCESS_KEY = 'OZ0EAYNPAIAKIYR24ZKX'
-SECRET_KEY = 'SrCpSPwoD3dKZXkmHBvR6bvShCAekB71Ijuz0yF6'
-ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
-
-print('--- Test S3 (list buckets) ---')
-import boto3
-from botocore.config import Config
-client = boto3.client('s3', endpoint_url=ENDPOINT,
-    aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY,
-    region_name='us-east-1', verify=False,
-    config=Config(signature_version='s3v4', s3={'addressing_style':'path'}))
-try:
-    r = client.list_buckets()
-    print('S3 OK - buckets:', [b['Name'] for b in r['Buckets']])
-except Exception as e:
-    print('S3 FAIL:', e)
-
-print()
-print('--- Test Admin API (list users) ---')
-url = f'{ENDPOINT}/admin/metadata/user'
-creds = Credentials(ACCESS_KEY, SECRET_KEY)
-req = AWSRequest(method='GET', url=url, data=b'')
-SigV4Auth(creds, 's3', 'us-east-1').add_auth(req)
-resp = requests.get(url, headers=dict(req.headers))
-print('Status:', resp.status_code)
-print('Body:  ', resp.text[:300])
-"
---- Test S3 (list buckets) ---
-S3 OK - buckets: ['dev']
-
---- Test Admin API (list users) ---
-Status: 403
-Body:   {"Code":"SignatureDoesNotMatch","Message":"","RequestId":"tx00000ac954d70c9cbb23b-0069ae99e5-11604713-ceph-objectstore","HostId":"11604713-ceph-objectstore-ceph-objectstore"}
-[e.cauca@DevOps-admins ~]$
-[e.cauca@DevOps-admins ~]$ kubectl exec -n rook-ceph -it \
-  $(kubectl get pod -n rook-ceph -l app=rook-ceph-rgw -o jsonpath='{.items[0].metadata.name}') \
-  -- bash -c '
-# Rulat DIRECT din podul RGW — care cunoaște zona corectă
-ACCESS_KEY="OZ0EAYNPAIAKIYR24ZKX"
-
-# Găsește uid-ul după access key
-radosgw-admin user info --access-key="'$ACCESS_KEY'" 2>/dev/null \
-  || radosgw-admin user list
-
-# Adaugă caps
-radosgw-admin caps add \
-  --uid=s3admin \
-  --caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
-
-radosgw-admin user info --uid=s3admin | python3 -c "
-import json, sys
-u = json.load(sys.stdin)
-print(\"Access:\", u[\"keys\"][0][\"access_key\"])
-print(\"Caps:  \", [(c[\"type\"],c[\"perm\"]) for c in u[\"caps\"]])
-"
-'
-Defaulted container "rgw" out of: rgw, log-collector, chown-container-data-dir (init)
-unable to get monitor info from DNS SRV with service name: ceph-mon
-2026-03-09T10:00:21.242+0000 7f1f7d5ec900 -1 failed for service _ceph-mon._tcp
-2026-03-09T10:00:21.242+0000 7f1f7d5ec900 -1 monclient: get_monmap_and_config cannot identify monitors to contact
-failed to fetch mon config (--no-mon-config to skip)
-unable to get monitor info from DNS SRV with service name: ceph-mon
-2026-03-09T10:00:21.284+0000 7f44e8f9f900 -1 failed for service _ceph-mon._tcp
-2026-03-09T10:00:21.284+0000 7f44e8f9f900 -1 monclient: get_monmap_and_config cannot identify monitors to contact
-failed to fetch mon config (--no-mon-config to skip)
-unable to get monitor info from DNS SRV with service name: ceph-mon
-2026-03-09T10:00:21.328+0000 7faa56df6900 -1 failed for service _ceph-mon._tcp
-2026-03-09T10:00:21.328+0000 7faa56df6900 -1 monclient: get_monmap_and_config cannot identify monitors to contact
-failed to fetch mon config (--no-mon-config to skip)
+NiceGUI ready to go on http://localhost:8080, and http://10.42.7.9:8080
+2026-03-09T21:09:50 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
+2026-03-09T21:09:50 [INFO] cephs3mgr.main: Database initialised
+2026-03-09T21:10:22 [ERROR] nicegui: 'ValueChangeEventArguments' object has no attribute 'args'
 Traceback (most recent call last):
-  File "<string>", line 3, in <module>
-  File "/usr/lib64/python3.9/json/__init__.py", line 293, in load
-    return loads(fp.read(),
-  File "/usr/lib64/python3.9/json/__init__.py", line 346, in loads
-    return _default_decoder.decode(s)
-  File "/usr/lib64/python3.9/json/decoder.py", line 337, in decode
-    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
-  File "/usr/lib64/python3.9/json/decoder.py", line 355, in raw_decode
-    raise JSONDecodeError("Expecting value", s, err.value) from None
-json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-command terminated with exit code 1
-[e.cauca@DevOps-admins ~]$
+  File "/usr/local/lib/python3.13/site-packages/nicegui/events.py", line 446, in handle_event
+    result = cast(Callable[[EventT], Any], handler)(arguments)
+  File "/app/app/pages/objects.py", line 245, in <lambda>
+    if isinstance(e.args, dict) else None
+                  ^^^^^^
+AttributeError: 'ValueChangeEventArguments' object has no attribute 'args'
+2026-03-09T21:10:44 [ERROR] nicegui: JavaScript did not respond within 1.0 s
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
+    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
+    async with timeouts.timeout(timeout):
+               ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
+    await result
+  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
+    self.value = await context.client.run_javascript(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
+    return await JavaScriptRequest(request_id, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
+    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
+TimeoutError: JavaScript did not respond within 1.0 s
+2026-03-09T21:10:48 [ERROR] nicegui: JavaScript did not respond within 1.0 s
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
+    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
+    async with timeouts.timeout(timeout):
+               ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
+    await result
+  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
+    self.value = await context.client.run_javascript(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
+    return await JavaScriptRequest(request_id, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
+    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
+TimeoutError: JavaScript did not respond within 1.0 s
+2026-03-09T21:10:49 [ERROR] nicegui: JavaScript did not respond within 1.0 s
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
+    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
+    async with timeouts.timeout(timeout):
+               ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
+    await result
+  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
+    self.value = await context.client.run_javascript(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
+    return await JavaScriptRequest(request_id, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
+    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
+TimeoutError: JavaScript did not respond within 1.0 s
+2026-03-09T21:10:52 [ERROR] nicegui: JavaScript did not respond within 1.0 s
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
+    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
+    async with timeouts.timeout(timeout):
+               ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
+    await result
+  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
+    self.value = await context.client.run_javascript(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
+    return await JavaScriptRequest(request_id, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
+    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
+TimeoutError: JavaScript did not respond within 1.0 s
+2026-03-09T21:10:54 [ERROR] nicegui: JavaScript did not respond within 1.0 s
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
+    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
+  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
+    async with timeouts.timeout(timeout):
+               ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
+    task.result()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
+    await result
+  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
+    self.value = await context.client.run_javascript(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
+    return await JavaScriptRequest(request_id, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
+    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
+TimeoutError: JavaScript did not respond within 1.0 s
