@@ -1,271 +1,190 @@
-Global Apps
-Cluster Management
-Continuous Delivery
-Virtualization Management
-Configuration
-Users & Authentication
-Extensions
-Global Settings
-v2.13.2
-Cluster down provider icon
-down
-rook-ceph
-s3manager
-CronJobs
-0
-DaemonSets
-3
-Deployments
-30
-Jobs
-5
-StatefulSets
-0
-Pods
-52
-Deployment:
-rook-ceph-rgw-ceph-objectstore-a
-Active
- 
-Namespace
-rook-ceph
- 
-Age
-38 days
-Image
-quay.io/ceph/ceph:v19.2.3
-Pod Restarts
-—
-Ready
-1/1
-Up-to-date
-1
-Available
-1
-Labels 15
-Show all labels
-Annotations 2
-Scale
-1
-Pods by State
-1
-Running
-Pods (1)
-Metrics
-Services (1)
-Ingresses
-Conditions (2)
-Recent Events (0)
-Related Resources (15)
-State
-Name
-Image
-Ready
-Restarts
-IP
-Node
-Age
-Running
-rook-ceph-rgw-ceph-objectstore-a-6855f99fd8-9tlfw	quay.io/ceph/ceph:v19.2.3
-+ 1 more	2/2	0	10.42.7.135	dev-down-worker-5.w.mcb.md	6 hours	
-Container: rgw
-Filter
-Connected
-debug 2026-03-09T08:46:39.558+0000 7fc81dbeb640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:46:39.558 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:46:49.530+0000 7fc89a4e4640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:46:49.531+0000 7fc866c7d640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:46:49.531+0000 7fc866c7d640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:46:49.530 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:46:59.532+0000 7fc7fa3a4640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:46:59.533+0000 7fc7fa3a4640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:46:59.533+0000 7fc7fa3a4640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:46:59.532 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:47:09.524+0000 7fc86fc8f640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:47:09.524+0000 7fc86fc8f640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:47:09.524+0000 7fc86fc8f640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:47:09.524 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:47:19.520+0000 7fc874498640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:47:19.522+0000 7fc874498640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:47:19.522+0000 7fc874498640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:47:19.520 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:47:29.545+0000 7fc88acc5640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:47:29.546+0000 7fc88acc5640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:47:29.546+0000 7fc88acc5640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:47:29.545 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:47:39.551+0000 7fc8a5cfb640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:47:39.552+0000 7fc8a5cfb640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:47:39.552+0000 7fc8a5cfb640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:47:39.551 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:47:41.311+0000 7fc89c4e8640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:47:41.312+0000 7fc89c4e8640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=403 latency=0.000999984s ======
-debug 2026-03-09T08:47:41.312+0000 7fc89c4e8640  1 beast: 0x7fc7982be5d0: 10.42.1.189 - - [09/Mar/2026:08:47:41.311 +0000] "HEAD /mpay/ HTTP/1.1" 403 0 - "MinIO (Microsoft Windows 10.0.22631;X64) minio-dotnet/7.0.0.0" - latency=0.000999984s
-debug 2026-03-09T08:47:45.853+0000 7fc8ced4d640  0 rgw UsageLogger: WARNING: RGWRados::log_usage(): user name empty (bucket=), skipping
-debug 2026-03-09T08:47:49.541+0000 7fc8bcd29640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:47:49.542+0000 7fc8bcd29640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:47:49.542+0000 7fc8bcd29640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:47:49.541 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:47:59.544+0000 7fc87d4aa640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:47:59.545+0000 7fc8acd09640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:47:59.545+0000 7fc8acd09640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:47:59.544 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:48:09.543+0000 7fc85ec6d640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:48:09.544+0000 7fc8b8520640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:48:09.544+0000 7fc8b8520640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:48:09.543 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:48:19.531+0000 7fc8ac508640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:48:19.531+0000 7fc8b751e640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:48:19.531+0000 7fc8b751e640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:48:19.531 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:48:29.536+0000 7fc8c1532640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:48:29.537+0000 7fc8c1532640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:48:29.537+0000 7fc8c1532640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:48:29.536 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:48:39.545+0000 7fc7ec388640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:48:39.546+0000 7fc7ec388640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:48:39.546+0000 7fc7ec388640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:48:39.545 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:48:49.525+0000 7fc7da364640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:48:49.526+0000 7fc7da364640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:48:49.526+0000 7fc7da364640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:48:49.525 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:48:59.534+0000 7fc8b551a640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:48:59.534+0000 7fc8b551a640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:48:59.534+0000 7fc8b551a640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:48:59.534 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:49:09.541+0000 7fc7ed38a640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:49:09.542+0000 7fc7e3b77640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:49:09.542+0000 7fc7e3b77640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:49:09.541 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:49:16.497+0000 7fc7dfb6f640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:49:16.499+0000 7fc7f639c640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=403 latency=0.001999968s ======
-debug 2026-03-09T08:49:16.499+0000 7fc7f639c640  1 beast: 0x7fc7982be5d0: 10.202.14.27 - - [09/Mar/2026:08:49:16.497 +0000] "GET / HTTP/1.1" 403 245 - "Boto3/1.42.63 md/Botocore#1.42.63 ua/2.1 os/linux#5.15.0-316.196.4.1.el9uek.x86_64 md/arch#x86_64 lang/python#3.13.12 md/pyimpl#CPython m/E,b,Z,N,e cfg/retry-mode#standard Botocore/1.42.63" - latency=0.001999968s
-debug 2026-03-09T08:49:18.768+0000 7fc7dd36a640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:49:18.769+0000 7fc7dd36a640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=403 latency=0.000999985s ======
-debug 2026-03-09T08:49:18.769+0000 7fc7dd36a640  1 beast: 0x7fc79823d5d0: 10.202.14.27 - - [09/Mar/2026:08:49:18.768 +0000] "GET / HTTP/1.1" 403 245 - "Boto3/1.42.63 md/Botocore#1.42.63 ua/2.1 os/linux#5.15.0-316.196.4.1.el9uek.x86_64 md/arch#x86_64 lang/python#3.13.12 md/pyimpl#CPython m/E,b,Z,N,e cfg/retry-mode#standard Botocore/1.42.63" - latency=0.000999985s
-debug 2026-03-09T08:49:19.547+0000 7fc8bd52a640  1 ====== starting new request req=0x7fc7981bc5d0 =====
-debug 2026-03-09T08:49:19.549+0000 7fc829402640  1 ====== req done req=0x7fc7981bc5d0 op status=0 http_status=200 latency=0.001999969s ======
-debug 2026-03-09T08:49:19.549+0000 7fc829402640  1 beast: 0x7fc7981bc5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:49:19.547 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.001999969s
-debug 2026-03-09T08:49:29.521+0000 7fc7d1352640  1 ====== starting new request req=0x7fc7981bc5d0 =====
-debug 2026-03-09T08:49:29.522+0000 7fc80ebcd640  1 ====== req done req=0x7fc7981bc5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:49:29.522+0000 7fc80ebcd640  1 beast: 0x7fc7981bc5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:49:29.521 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:49:39.520+0000 7fc7d0b51640  1 ====== starting new request req=0x7fc7981bc5d0 =====
-debug 2026-03-09T08:49:39.521+0000 7fc7e6b7d640  1 ====== req done req=0x7fc7981bc5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:49:39.521+0000 7fc7e6b7d640  1 beast: 0x7fc7981bc5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:49:39.520 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:49:45.879+0000 7fc8ced4d640  0 rgw UsageLogger: WARNING: RGWRados::log_usage(): user name empty (bucket=), skipping
-debug 2026-03-09T08:49:49.543+0000 7fc840c31640  1 ====== starting new request req=0x7fc7981bc5d0 =====
-debug 2026-03-09T08:49:49.547+0000 7fc819be3640  1 ====== req done req=0x7fc7981bc5d0 op status=0 http_status=200 latency=0.003999937s ======
-debug 2026-03-09T08:49:49.547+0000 7fc819be3640  1 beast: 0x7fc7981bc5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:49:49.543 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.003999937s
-debug 2026-03-09T08:49:51.766+0000 7fc83ac25640  1 ====== starting new request req=0x7fc7981bc5d0 =====
-debug 2026-03-09T08:49:51.766+0000 7fc83ac25640  1 ====== req done req=0x7fc7981bc5d0 op status=0 http_status=403 latency=0.000000000s ======
-debug 2026-03-09T08:49:51.766+0000 7fc83ac25640  1 beast: 0x7fc7981bc5d0: 10.42.1.189 - - [09/Mar/2026:08:49:51.766 +0000] "HEAD /mpay/ HTTP/1.1" 403 0 - "MinIO (Microsoft Windows 10.0.22631;X64) minio-dotnet/7.0.0.0" - latency=0.000000000s
-debug 2026-03-09T08:49:59.531+0000 7fc842c35640  1 ====== starting new request req=0x7fc79813b5d0 =====
-debug 2026-03-09T08:49:59.532+0000 7fc837c1f640  1 ====== req done req=0x7fc79813b5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:49:59.532+0000 7fc837c1f640  1 beast: 0x7fc79813b5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:49:59.531 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:50:09.542+0000 7fc843c37640  1 ====== starting new request req=0x7fc79813b5d0 =====
-debug 2026-03-09T08:50:09.543+0000 7fc843c37640  1 ====== req done req=0x7fc79813b5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:50:09.543+0000 7fc843c37640  1 beast: 0x7fc79813b5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:50:09.542 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:50:15.887+0000 7fc8ced4d640  0 rgw UsageLogger: WARNING: RGWRados::log_usage(): user name empty (bucket=), skipping
-debug 2026-03-09T08:50:19.539+0000 7fc84ec4d640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:50:19.540+0000 7fc84ec4d640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:50:19.540+0000 7fc84ec4d640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:50:19.539 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:50:29.537+0000 7fc848440640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:50:29.537+0000 7fc860c71640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:50:29.537+0000 7fc860c71640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:50:29.537 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:50:39.539+0000 7fc851452640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:50:39.539+0000 7fc851452640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:50:39.539+0000 7fc851452640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:50:39.539 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:50:45.632+0000 7fc84bc47640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:50:45.633+0000 7fc84bc47640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=403 latency=0.000999984s ======
-debug 2026-03-09T08:50:45.633+0000 7fc84bc47640  1 beast: 0x7fc7982be5d0: 10.42.1.189 - - [09/Mar/2026:08:50:45.632 +0000] "HEAD /mpay/ HTTP/1.1" 403 0 - "MinIO (Microsoft Windows 10.0.22631;X64) minio-dotnet/7.0.0.0" - latency=0.000999984s
-debug 2026-03-09T08:50:45.896+0000 7fc8ced4d640  0 rgw UsageLogger: WARNING: RGWRados::log_usage(): user name empty (bucket=), skipping
-debug 2026-03-09T08:50:49.540+0000 7fc7cbb47640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:50:49.541+0000 7fc7cbb47640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:50:49.541+0000 7fc7cbb47640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:50:49.540 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:50:59.526+0000 7fc816bdd640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:50:59.527+0000 7fc89dceb640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:50:59.527+0000 7fc89dceb640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:50:59.526 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:51:09.538+0000 7fc832c15640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:51:09.539+0000 7fc8944d8640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:51:09.539+0000 7fc8944d8640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:51:09.538 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:51:19.522+0000 7fc81bbe7640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:51:19.523+0000 7fc87fcaf640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:51:19.523+0000 7fc87fcaf640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:51:19.522 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:51:29.533+0000 7fc893cd7640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:51:29.534+0000 7fc893cd7640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:51:29.534+0000 7fc893cd7640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:51:29.533 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:51:39.536+0000 7fc8904d0640  1 ====== starting new request req=0x7fc79823d5d0 =====
-debug 2026-03-09T08:51:39.537+0000 7fc8904d0640  1 ====== req done req=0x7fc79823d5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:51:39.537+0000 7fc8904d0640  1 beast: 0x7fc79823d5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:51:39.536 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:51:49.539+0000 7fc8814b2640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:51:49.540+0000 7fc8814b2640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:51:49.540+0000 7fc8814b2640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:51:49.539 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:51:59.531+0000 7fc8984e0640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:51:59.532+0000 7fc8a5cfb640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:51:59.532+0000 7fc8a5cfb640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:51:59.531 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:52:09.526+0000 7fc830c11640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:52:09.527+0000 7fc83c428640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:52:09.527+0000 7fc83c428640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:52:09.526 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:52:19.524+0000 7fc89cce9640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:52:19.525+0000 7fc8b2d15640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:52:19.525+0000 7fc8b2d15640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:52:19.524 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:52:29.534+0000 7fc8b0d11640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:52:29.535+0000 7fc884cb9640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:52:29.535+0000 7fc884cb9640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:52:29.534 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:52:39.540+0000 7fc8aed0d640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:52:39.541+0000 7fc8ac508640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:52:39.541+0000 7fc8ac508640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:52:39.540 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:52:49.525+0000 7fc8a6cfd640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:52:49.525+0000 7fc7ccb49640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:52:49.525+0000 7fc7ccb49640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:52:49.525 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:52:59.526+0000 7fc7db366640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:52:59.527+0000 7fc7db366640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:52:59.527+0000 7fc7db366640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:52:59.526 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:53:09.544+0000 7fc7ef38e640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:53:09.545+0000 7fc7ef38e640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:53:09.545+0000 7fc7ef38e640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:53:09.544 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:53:19.549+0000 7fc87c4a8640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:53:19.550+0000 7fc841c33640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:53:19.550+0000 7fc841c33640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:53:19.549 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:53:29.528+0000 7fc8b7d1f640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:53:29.529+0000 7fc8b7d1f640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:53:29.529+0000 7fc8b7d1f640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:53:29.528 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:53:39.529+0000 7fc8b7d1f640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:53:39.530+0000 7fc8b7d1f640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:53:39.530+0000 7fc8b7d1f640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:53:39.529 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:53:49.542+0000 7fc871c93640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:53:49.543+0000 7fc7d3356640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:53:49.543+0000 7fc7d3356640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:53:49.542 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:53:59.532+0000 7fc7c8340640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:53:59.533+0000 7fc80a3c4640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:53:59.533+0000 7fc80a3c4640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:53:59.532 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:54:09.545+0000 7fc829402640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:09.546+0000 7fc82d40a640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:54:09.546+0000 7fc82d40a640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:54:09.545 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:54:19.534+0000 7fc7d4358640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:19.535+0000 7fc7d4358640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:54:19.535+0000 7fc7d4358640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:54:19.534 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:54:29.049+0000 7fc7f1392640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:29.054+0000 7fc819be3640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=403 latency=0.004999921s ======
-debug 2026-03-09T08:54:29.054+0000 7fc819be3640  1 beast: 0x7fc7982be5d0: 10.42.7.3 - - [09/Mar/2026:08:54:29.049 +0000] "GET /admin/metadata/user HTTP/1.1" 403 174 - "python-requests/2.32.5" - latency=0.004999921s
-debug 2026-03-09T08:54:29.535+0000 7fc7eb386640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:29.536+0000 7fc7eb386640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:54:29.536+0000 7fc7eb386640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:54:29.535 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:54:39.530+0000 7fc80fbcf640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:39.531+0000 7fc81d3ea640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:54:39.531+0000 7fc81d3ea640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:54:39.530 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:54:49.543+0000 7fc85545a640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:49.544+0000 7fc848c41640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:54:49.544+0000 7fc848c41640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:54:49.543 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:54:59.545+0000 7fc84dc4b640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:54:59.546+0000 7fc84dc4b640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:54:59.546+0000 7fc84dc4b640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:54:59.545 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:55:02.768+0000 7fc849442640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:02.772+0000 7fc849442640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=403 latency=0.003999937s ======
-debug 2026-03-09T08:55:02.772+0000 7fc849442640  1 beast: 0x7fc7982be5d0: 10.42.7.3 - - [09/Mar/2026:08:55:02.768 +0000] "GET /admin/metadata/user HTTP/1.1" 403 171 - "python-requests/2.32.5" - latency=0.003999937s
-debug 2026-03-09T08:55:09.541+0000 7fc8143d8640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:09.541+0000 7fc7ea384640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000000000s ======
-debug 2026-03-09T08:55:09.541+0000 7fc7ea384640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:55:09.540 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000000000s
-debug 2026-03-09T08:55:19.540+0000 7fc84d44a640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:19.542+0000 7fc81b3e6640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.001999969s ======
-debug 2026-03-09T08:55:19.542+0000 7fc81b3e6640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:55:19.540 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.001999969s
-debug 2026-03-09T08:55:29.542+0000 7fc87749e640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:29.543+0000 7fc87749e640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:55:29.543+0000 7fc87749e640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:55:29.542 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:55:39.528+0000 7fc85645c640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:39.529+0000 7fc85645c640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:55:39.529+0000 7fc85645c640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:55:39.528 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:55:49.528+0000 7fc838420640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:49.529+0000 7fc838420640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:55:49.529+0000 7fc838420640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:55:49.528 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:55:59.534+0000 7fc88ccc9640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:55:59.535+0000 7fc88eccd640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999985s ======
-debug 2026-03-09T08:55:59.535+0000 7fc88eccd640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:55:59.534 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999985s
-debug 2026-03-09T08:56:09.529+0000 7fc870490640  1 ====== starting new request req=0x7fc7982be5d0 =====
-debug 2026-03-09T08:56:09.530+0000 7fc855c5b640  1 ====== req done req=0x7fc7982be5d0 op status=0 http_status=200 latency=0.000999984s ======
-debug 2026-03-09T08:56:09.530+0000 7fc855c5b640  1 beast: 0x7fc7982be5d0: 127.0.0.1 - anonymous [09/Mar/2026:08:56:09.529 +0000] "GET / HTTP/1.1" 200 204 - "curl/7.76.1" - latency=0.000999984s
-debug 2026-03-09T08:56:19.529+0000 7fc890cd1640  1 ====== starting new request req=0x7fc7982be5d0 =====
+[e.cauca@DevOps-admins ~]$ kubectl exec -n rook-ceph -it   $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}')   -- radosgw-admin user info --uid=s3admin
+{
+    "user_id": "s3admin",
+    "display_name": "S3 Admin",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "s3admin",
+            "access_key": "4KCA0TM1FB1IWH3X1ONB",
+            "secret_key": "JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz",
+            "active": true,
+            "create_date": "2026-03-06T08:26:26.431159Z"
+        }
+    ],
+    "swift_keys": [],
+    "caps": [
+        {
+            "type": "buckets",
+            "perm": "*"
+        },
+        {
+            "type": "metadata",
+            "perm": "*"
+        },
+        {
+            "type": "usage",
+            "perm": "*"
+        },
+        {
+            "type": "users",
+            "perm": "*"
+        },
+        {
+            "type": "zone",
+            "perm": "*"
+        }
+    ],
+    "op_mask": "read, write, delete",
+    "admin": true,
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": [],
+    "account_id": "",
+    "path": "/",
+    "create_date": "2026-03-06T08:26:26.430370Z",
+    "tags": [],
+    "group_ids": []
+}
+
+[e.cauca@DevOps-admins ~]$ kubectl exec -n rook-ceph -it \
+  $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
+  -- radosgw-admin caps add \
+     --uid=s3admin \
+     --caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
+{
+    "user_id": "s3admin",
+    "display_name": "S3 Admin",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "s3admin",
+            "access_key": "4KCA0TM1FB1IWH3X1ONB",
+            "secret_key": "JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz",
+            "active": true,
+            "create_date": "2026-03-06T08:26:26.431159Z"
+        }
+    ],
+    "swift_keys": [],
+    "caps": [
+        {
+            "type": "buckets",
+            "perm": "*"
+        },
+        {
+            "type": "metadata",
+            "perm": "*"
+        },
+        {
+            "type": "usage",
+            "perm": "*"
+        },
+        {
+            "type": "users",
+            "perm": "*"
+        },
+        {
+            "type": "zone",
+            "perm": "*"
+        }
+    ],
+    "op_mask": "read, write, delete",
+    "admin": true,
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": [],
+    "account_id": "",
+    "path": "/",
+    "create_date": "2026-03-06T08:26:26.430370Z",
+    "tags": [],
+    "group_ids": []
+}
+
+[e.cauca@DevOps-admins ~]$
+
+
+I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$
+I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$ python3 -c "
+import requests
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
+
+# ─── COMPLETEAZĂ AICI ───
+ACCESS_KEY = '4KCA0TM1FB1IWH3X1ONB'
+SECRET_KEY = 'JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz'  # ← schimbă cu secretul real
+REGION     = 'us-east-1'
+ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
+# ─────────────────────────
+
+url = f'{ENDPOINT}/admin/metadata/user'
+creds = Credentials(ACCESS_KEY, SECRET_KEY)
+req = AWSRequest(method='GET', url=url, data=b'')
+SigV4Auth(creds, 's3', REGION).add_auth(req)
+resp = requests.get(url, headers=dict(req.headers))
+print('STATUS:', resp.status_code)
+print('BODY:  ', resp.text)
+> ^C
+I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$ python3 -c "
+import requests
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
+
+# ─── COMPLETEAZĂ AICI ───
+ACCESS_KEY = '4KCA0TM1FB1IWH3X1ONB'
+SECRET_KEY = 'JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz'  # ← schimbă cu secretul real
+REGION     = 'us-east-1'
+ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
+# ─────────────────────────
+
+url = f'{ENDPOINT}/admin/metadata/user'
+creds = Credentials(ACCESS_KEY, SECRET_KEY)
+req = AWSRequest(method='GET', url=url, data=b'')
+SigV4Auth(creds, 's3', REGION).add_auth(req)
+resp = requests.get(url, headers=dict(req.headers))
+print('STATUS:', resp.status_code)
+print('BODY:  ', resp.text)"
+STATUS: 403
+BODY:   {"Code":"InvalidAccessKeyId","Message":"","RequestId":"tx00000b17992df034f54b1-0069ae8d3d-11604713-ceph-objectstore","HostId":"11604713-ceph-objectstore-ceph-objectstore"}
+I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$
