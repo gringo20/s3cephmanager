@@ -1,30 +1,13 @@
-Acum totul e clar! CRD-ul a funcționat — Rook a creat userul cu succes (`Phase: Ready`, Secret creat). Dar `radosgw-admin user list` nu îl vede pentru că **userul e creat în zona/realm-ul internal al objectstore-ului**, nu în zona default pe care o vede tools pod-ul.
 
-## Pasul 1 — Citește credențialele din Secret (create de Rook)
-
-```bash
-kubectl get secret -n rook-ceph \
-  rook-ceph-object-user-ceph-objectstore-s3admin \
-  -o go-template='
-AccessKey: {{.data.AccessKey | base64decode}}
-SecretKey: {{.data.SecretKey | base64decode}}
-'
-```
-
-## Pasul 2 — Testează că credențialele funcționează cu RGW-ul activ
-
-Rulează din podul aplicației:
-
-```bash
-kubectl exec -n s3manager -it deploy/cephs3manager -- python3 -c "
+[e.cauca@DevOps-admins ~]$ kubectl exec -n s3manager -it deploy/cephs3manager -- python3 -c "
 import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from botocore.credentials import Credentials
 
 # ← pune credențialele din Secret
-ACCESS_KEY = 'PUNE_ACCES_KEY_DIN_SECRET'
-SECRET_KEY = 'PUNE_SECRET_KEY_DIN_SECRET'
+ACCESS_KEY = 'OZ0EAYNPAIAKIYR24ZKX'
+SECRET_KEY = 'SrCpSPwoD3dKZXkmHBvR6bvShCAekB71Ijuz0yF6'
 ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
 
 print('--- Test S3 (list buckets) ---')
@@ -50,23 +33,18 @@ resp = requests.get(url, headers=dict(req.headers))
 print('Status:', resp.status_code)
 print('Body:  ', resp.text[:300])
 "
-```
+--- Test S3 (list buckets) ---
+S3 OK - buckets: ['dev']
 
-## Pasul 3 — În funcție de rezultat
-
-### ✅ Dacă Admin API returnează 200 — totul e rezolvat!
-Actualizează connection settings în aplicație cu credențialele din Secret.
-
-### ⚠️ Dacă Admin API returnează 403 — caps lipsă, adaugă via Admin API direct
-
-Rook a creat userul dar s-ar putea că nu a setat toate caps-urile. Adaugă-le folosind chiar credențialele din Secret (auto-referință):
-
-```bash
-kubectl exec -n rook-ceph -it \
+--- Test Admin API (list users) ---
+Status: 403
+Body:   {"Code":"SignatureDoesNotMatch","Message":"","RequestId":"tx00000ac954d70c9cbb23b-0069ae99e5-11604713-ceph-objectstore","HostId":"11604713-ceph-objectstore-ceph-objectstore"}
+[e.cauca@DevOps-admins ~]$
+[e.cauca@DevOps-admins ~]$ kubectl exec -n rook-ceph -it \
   $(kubectl get pod -n rook-ceph -l app=rook-ceph-rgw -o jsonpath='{.items[0].metadata.name}') \
   -- bash -c '
 # Rulat DIRECT din podul RGW — care cunoaște zona corectă
-ACCESS_KEY="PUNE_ACCES_KEY_DIN_SECRET"
+ACCESS_KEY="OZ0EAYNPAIAKIYR24ZKX"
 
 # Găsește uid-ul după access key
 radosgw-admin user info --access-key="'$ACCESS_KEY'" 2>/dev/null \
@@ -84,10 +62,29 @@ print(\"Access:\", u[\"keys\"][0][\"access_key\"])
 print(\"Caps:  \", [(c[\"type\"],c[\"perm\"]) for c in u[\"caps\"]])
 "
 '
-```
-
-**Diferența față de înainte**: acum rulezi `radosgw-admin` din **podul RGW** (nu tools), care e în același context de zonă cu userul creat de CRD.
-
----
-
-Trimite output-ul testului Python — vom ști exact în ce situație suntem.
+Defaulted container "rgw" out of: rgw, log-collector, chown-container-data-dir (init)
+unable to get monitor info from DNS SRV with service name: ceph-mon
+2026-03-09T10:00:21.242+0000 7f1f7d5ec900 -1 failed for service _ceph-mon._tcp
+2026-03-09T10:00:21.242+0000 7f1f7d5ec900 -1 monclient: get_monmap_and_config cannot identify monitors to contact
+failed to fetch mon config (--no-mon-config to skip)
+unable to get monitor info from DNS SRV with service name: ceph-mon
+2026-03-09T10:00:21.284+0000 7f44e8f9f900 -1 failed for service _ceph-mon._tcp
+2026-03-09T10:00:21.284+0000 7f44e8f9f900 -1 monclient: get_monmap_and_config cannot identify monitors to contact
+failed to fetch mon config (--no-mon-config to skip)
+unable to get monitor info from DNS SRV with service name: ceph-mon
+2026-03-09T10:00:21.328+0000 7faa56df6900 -1 failed for service _ceph-mon._tcp
+2026-03-09T10:00:21.328+0000 7faa56df6900 -1 monclient: get_monmap_and_config cannot identify monitors to contact
+failed to fetch mon config (--no-mon-config to skip)
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/usr/lib64/python3.9/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/usr/lib64/python3.9/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib64/python3.9/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib64/python3.9/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+command terminated with exit code 1
+[e.cauca@DevOps-admins ~]$
