@@ -38,12 +38,56 @@ from __future__ import annotations
 
 import asyncio
 import io
+import uuid as _uuid
+from fastapi import Response as _FastAPIResponse
 from nicegui import ui, app, events
 
 from app.components.sidebar       import create_layout, require_connection
 from app.components.progress_modal import ProgressModal
 from app.s3_client                 import get_s3_from_conn, ProgressCallback
 import humanize
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Preview proxy – same-origin FastAPI endpoint to serve S3 content in iframes
+#  (browsers block cross-origin S3 presigned URLs inside <iframe> / <object>)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_preview_tokens: dict[str, str] = {}   # token → presigned_url
+_MAX_PREVIEW_TOKENS = 200
+
+
+def _register_preview_token(presigned_url: str) -> str:
+    """Store a presigned URL under a random token; return the token."""
+    token = _uuid.uuid4().hex
+    if len(_preview_tokens) >= _MAX_PREVIEW_TOKENS:
+        # Evict oldest entry to keep memory bounded
+        _preview_tokens.pop(next(iter(_preview_tokens)), None)
+    _preview_tokens[token] = presigned_url
+    return token
+
+
+@app.get("/api/preview/{token}")
+async def _preview_proxy_route(token: str):
+    """Proxy S3 presigned content through our server (same origin → no CORS / X-Frame issues)."""
+    import requests as _req
+    purl = _preview_tokens.get(token)
+    if not purl:
+        return _FastAPIResponse(status_code=404, content=b"Preview not found or expired.")
+    loop = asyncio.get_event_loop()
+    try:
+        r = await loop.run_in_executor(
+            None, lambda: _req.get(purl, timeout=60, verify=False)
+        )
+        r.raise_for_status()
+        ct = r.headers.get("content-type", "application/octet-stream")
+        return _FastAPIResponse(
+            content=r.content,
+            media_type=ct,
+            headers={"Content-Disposition": "inline", "Cache-Control": "no-store"},
+        )
+    except Exception as exc:
+        return _FastAPIResponse(status_code=502, content=str(exc).encode())
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -194,12 +238,18 @@ async def objects_page() -> None:
                 row_key="key",
                 selection="multiple",
                 pagination={"rowsPerPage": 25, "sortBy": "name"},
+                # Keep Python-side pagination in sync so table.update() after
+                # search/reload doesn't reset the user's chosen rows-per-page.
+                on_pagination_change=lambda e: (
+                    table._props.update({"pagination": e.args})
+                    if isinstance(e.args, dict) else None
+                ),
             ).style(
                 f"background:{C['tbg']}; border:1px solid {C['bdr']}; "
                 "border-radius:10px; width:100%;"
             ).props(
                 ('flat dark' if dark else 'flat') +
-                ' :rows-per-page-options="[10, 25, 50, 100]"'
+                ' :rows-per-page-options="[10,25,50,100]"'
             )
 
             # ── Slots ──────────────────────────────────────────────────────────
@@ -1356,54 +1406,15 @@ async def _show_preview(
 
         # ── PDF ───────────────────────────────────────────────────────────────
         elif ext in _PREVIEW_PDF_EXTS:
-            # Fetch server-side to avoid cross-origin iframe blocks.
-            # Browsers often refuse to embed S3 presigned URLs in iframes
-            # due to X-Frame-Options / CSP headers on the storage backend.
-            # Embedding as a base64 data URI sidesteps this completely.
-            status_col = ui.column().style(
-                "width:100%; align-items:center; padding:52px 0; gap:10px;"
+            # Route the presigned URL through our own FastAPI proxy so the
+            # browser treats it as same-origin — avoids X-Frame-Options /
+            # CSP blocks that Ceph RGW / S3 backends typically set.
+            token = _register_preview_token(url)
+            ui.html(
+                f'<iframe src="/api/preview/{token}" '
+                f'style="width:100%; height:68vh; border:none; '
+                f'border-radius:8px;" type="application/pdf"></iframe>'
             )
-            with status_col:
-                ui.spinner("dots", size="xl").style(
-                    f"color:{'#58a6ff' if dark else '#0969da'};"
-                )
-                ui.label("Loading PDF…").style(
-                    f"color:{C['mut']}; font-size:0.82rem;"
-                )
-            try:
-                resp = await loop.run_in_executor(
-                    None, lambda: _requests.get(url, timeout=30, verify=False)
-                )
-                resp.raise_for_status()
-                pdf_bytes = resp.content
-                _MAX_PDF = 20 * 1024 * 1024   # 20 MB inline limit
-                status_col.clear()
-                with status_col:
-                    if len(pdf_bytes) > _MAX_PDF:
-                        ui.icon("picture_as_pdf").style(
-                            f"font-size:3rem; color:{C['mut']};"
-                        )
-                        ui.label(
-                            f"PDF too large for inline preview "
-                            f"({humanize.naturalsize(len(pdf_bytes))})."
-                        ).style(f"color:{C['mut']}; font-size:0.88rem;")
-                        ui.label(
-                            "Use the Download button to open it."
-                        ).style(f"color:{C['mut']}; font-size:0.78rem;")
-                    else:
-                        import base64 as _b64
-                        b64 = _b64.b64encode(pdf_bytes).decode()
-                        ui.html(
-                            f'<iframe src="data:application/pdf;base64,{b64}" '
-                            f'style="width:100%; height:68vh; border:none; '
-                            f'border-radius:8px;"></iframe>'
-                        )
-            except Exception as exc:
-                status_col.clear()
-                with status_col:
-                    ui.label(f"⚠ Could not load PDF: {exc}").style(
-                        "color:#da3633; font-size:0.82rem;"
-                    )
 
         # ── Video ─────────────────────────────────────────────────────────────
         elif ext in _PREVIEW_VIDEO_EXTS:
