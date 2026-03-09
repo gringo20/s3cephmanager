@@ -85,14 +85,37 @@ class RGWAdminClient:
         """Sign and execute one Admin Ops request.
 
         *path* is relative to ``/admin``, e.g. ``"/user"`` or ``"/bucket"``.
-        *params* are placed in the query string (never the request body).
+        Some RGW paths embed an action qualifier after ``?``
+        (e.g. ``"/user?quota"``, ``"/user?key"``, ``"/user?subuser"``).
+        These tokens are extracted and merged into the query-string params
+        dict *before* SigV4 signing so that every query parameter that will
+        appear in the real HTTP request is also present in the canonical
+        query string.  Omitting them causes ``SignatureDoesNotMatch`` even
+        when the credentials are correct.
 
+        *params* are placed in the query string (never the request body).
         All param values are coerced to ``str`` so botocore can build a
         consistent canonical query string.
         """
-        url  = f"{self.base_url}/admin{path}"
-        qp   = {k: str(v) for k, v in (params or {}).items()}
-        log.debug("RGW %s /admin%s params=%s", method.upper(), path, list(qp.keys()))
+        # Promote any action-qualifier embedded in the path into the qp dict.
+        # "/user?quota"  → path_only="/user", embedded={"quota": ""}
+        # "/user?key"    → path_only="/user", embedded={"key": ""}
+        if "?" in path:
+            path_only, qs = path.split("?", 1)
+            embedded: dict = {}
+            for token in qs.split("&"):
+                if "=" in token:
+                    k, v = token.split("=", 1)
+                    embedded[k] = v
+                elif token:
+                    embedded[token] = ""
+        else:
+            path_only = path
+            embedded  = {}
+
+        url  = f"{self.base_url}/admin{path_only}"
+        qp   = {**embedded, **{k: str(v) for k, v in (params or {}).items()}}
+        log.debug("RGW %s /admin%s params=%s", method.upper(), path_only, list(qp.keys()))
 
         # Sign with SigV4 using UNSIGNED-PAYLOAD convention (matches boto3 S3).
         # The x-amz-content-sha256 header must be present and signed;
@@ -117,7 +140,7 @@ class RGWAdminClient:
             # (SignatureDoesNotMatch / AccessDenied / InvalidAccessKeyId …)
             log.warning(
                 "RGW %s /admin%s → HTTP %s  body=%r",
-                method.upper(), path, resp.status_code,
+                method.upper(), path_only, resp.status_code,
                 resp.text[:300],
             )
             _raise_rgw_error(resp)

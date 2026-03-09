@@ -568,6 +568,34 @@ async def buckets_page() -> None:
                             f"border-radius:8px; color:{_ltxt}; width:100%;"
                         )
 
+                with ui.row().style(
+                    "gap:8px; width:100%; margin-top:8px; align-items:flex-start;"
+                ):
+                    with ui.column().style("gap:4px; flex:1;"):
+                        ui.label("Transition after (days, 0 = off)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_trans_days"] = ui.number(
+                            value=0, min=0, step=1, format="%.0f",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(
+                            f"background:{_lbg}; border:1px solid {_lbdr}; "
+                            f"border-radius:8px; color:{_ltxt}; width:100%;"
+                        )
+                    with ui.column().style("gap:4px; flex:2;"):
+                        ui.label("Storage class (e.g. GLACIER)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_trans_class"] = ui.input(
+                            value="GLACIER",
+                            placeholder="GLACIER, STANDARD_IA, DEEP_ARCHIVE …",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(_inp(dark))
+
                 bkt_ctx["lc_enabled"] = ui.checkbox("Rule enabled", value=True).style(
                     f"color:{_ltxt}; margin-top:8px;"
                 )
@@ -1156,6 +1184,14 @@ def _render_lifecycle_rules(col, rules: list, ctx: dict, s3, dark: bool) -> None
                         _lc_row(f"🗑  Delete old versions after {noncur} day(s)", txt)
                     if abort:
                         _lc_row(f"⏹  Abort incomplete uploads after {abort} day(s)", txt)
+                    for t in (rule.get("Transitions") or []):
+                        t_days  = t.get("Days")
+                        t_class = t.get("StorageClass", "?")
+                        if t_days:
+                            _lc_row(
+                                f"📦  Transition to {t_class} after {t_days} day(s)",
+                                txt,
+                            )
 
 
 def _lc_row(text: str, color: str) -> None:
@@ -1172,11 +1208,13 @@ async def _add_lifecycle_rule(s3, ctx: dict, dark: bool) -> None:
     exp_days    = int(ctx["lc_exp_days"].value    or 0)
     noncur_days = int(ctx["lc_noncur_days"].value or 0)
     abort_days  = int(ctx["lc_abort_days"].value  or 0)
+    trans_days  = int(ctx["lc_trans_days"].value  or 0)
+    trans_class = (ctx["lc_trans_class"].value or "GLACIER").strip().upper() or "GLACIER"
     enabled     = bool(ctx["lc_enabled"].value)
 
-    if not (exp_days or noncur_days or abort_days):
+    if not (exp_days or noncur_days or abort_days or trans_days):
         ctx["lc_err"].set_text(
-            "Set at least one expiration condition (days > 0)."
+            "Set at least one condition (expiration or transition, days > 0)."
         )
         return
 
@@ -1194,6 +1232,8 @@ async def _add_lifecycle_rule(s3, ctx: dict, dark: bool) -> None:
         rule["NoncurrentVersionExpiration"] = {"NoncurrentDays": noncur_days}
     if abort_days > 0:
         rule["AbortIncompleteMultipartUpload"] = {"DaysAfterInitiation": abort_days}
+    if trans_days > 0:
+        rule["Transitions"] = [{"Days": trans_days, "StorageClass": trans_class}]
 
     # Replace rule with same ID if it already exists; otherwise append
     rules = [r for r in ctx.get("_lc_rules", []) if r.get("ID") != rule_id]
@@ -1212,6 +1252,8 @@ async def _add_lifecycle_rule(s3, ctx: dict, dark: bool) -> None:
         ctx["lc_exp_days"].set_value(0)
         ctx["lc_noncur_days"].set_value(0)
         ctx["lc_abort_days"].set_value(0)
+        ctx["lc_trans_days"].set_value(0)
+        ctx["lc_trans_class"].set_value("GLACIER")
         ctx["lc_enabled"].set_value(True)
         _render_lifecycle_rules(ctx["lc_col"], rules, ctx, s3, dark)
         ui.notify(f"Lifecycle rule '{rule_id}' saved.", type="positive")
