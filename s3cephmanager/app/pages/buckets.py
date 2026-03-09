@@ -17,6 +17,15 @@ import json
 from nicegui import ui, app
 from app.components.sidebar import create_layout, require_connection
 from app.s3_client import get_s3_from_conn
+from app.rgw_admin import get_rgw_from_conn as _get_rgw
+
+# Human-readable labels for permission levels
+_PERM_LABELS = {
+    "read":       "Read only",
+    "write":      "Write only",
+    "read_write": "Read + Write",
+    "full":       "Full Control",
+}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -30,7 +39,8 @@ async def buckets_page() -> None:
     if not conn:
         return
 
-    s3 = get_s3_from_conn(conn)
+    s3  = get_s3_from_conn(conn)
+    rgw = _get_rgw(conn)  # None if admin_mode / admin_endpoint not configured
 
     # ── Page scaffold ─────────────────────────────────────────────────────────
     txt = "#e6edf3" if dark else "#1f2328"
@@ -143,7 +153,7 @@ async def buckets_page() -> None:
         table.on("delete", lambda e: _open_delete(
             e.args, delete_dlg, del_name_lbl, del_err
         ))
-        table.on("bucket_settings", lambda e: _open_bucket_settings(e.args, bucket_dlg, bkt_ctx, s3, dark))
+        table.on("bucket_settings", lambda e: _open_bucket_settings(e.args, bucket_dlg, bkt_ctx, s3, rgw, dark))
 
         # Filter
         search.on("input", lambda e: table.run_method(
@@ -151,17 +161,92 @@ async def buckets_page() -> None:
         ))
 
     # ── Create dialog ─────────────────────────────────────────────────────────
-    with ui.dialog() as create_dlg, _dialog_card(dark):
+    _cperms: dict = {}   # {uid: level} – permissions to apply after creation
+    _cperm_rows: list = []  # list of (uid_inp, level_sel, row_el) widgets
+
+    def _cperm_add_row(uid_val: str = "", level_val: str = "read_write") -> None:
+        """Add one user-permission row inside the create dialog."""
+        bg  = "#0d1117" if dark else "#f6f8fa"
+        bdr = "#21262d" if dark else "#d0d7de"
+        txt = "#e6edf3" if dark else "#1f2328"
+        with cperm_col:
+            with ui.row().style(
+                "align-items:center; gap:6px; width:100%;"
+            ) as row_el:
+                uid_inp = ui.input(placeholder="username").props(
+                    "dense outlined dark" if dark else "dense outlined"
+                ).style(
+                    f"background:{bg}; border:1px solid {bdr}; border-radius:6px; "
+                    f"color:{txt}; flex:1; font-size:0.82rem;"
+                )
+                uid_inp.set_value(uid_val)
+                lvl_sel = ui.select(
+                    options=list(_PERM_LABELS.keys()),
+                    value=level_val,
+                ).props("dense outlined dark" if dark else "dense outlined").style(
+                    f"background:{bg}; border:1px solid {bdr}; border-radius:6px; "
+                    f"color:{txt}; width:130px; font-size:0.82rem;"
+                )
+                entry = (uid_inp, lvl_sel, row_el)
+                _cperm_rows.append(entry)
+                ui.button(
+                    icon="remove_circle_outline",
+                    on_click=lambda e=entry: _cperm_remove_row(e),
+                ).props("flat round dense").style("color:#da3633; flex-shrink:0;")
+
+    def _cperm_remove_row(entry) -> None:
+        uid_inp, lvl_sel, row_el = entry
+        if entry in _cperm_rows:
+            _cperm_rows.remove(entry)
+        row_el.delete()
+
+    with ui.dialog() as create_dlg, _dialog_card(dark, "520px"):
         _dlg_title("Create Bucket", dark)
         f_name   = _dlg_input("Bucket Name", "my-new-bucket", dark)
         f_region = _dlg_input("Region", conn.get("region", "us-east-1"), dark)
+
+        # ── Optional Permissions section ───────────────────────────────────
+        mut = "#8b949e" if dark else "#57606a"
+        bdr = "#21262d" if dark else "#d0d7de"
+        with ui.expansion(
+            "Access Permissions (optional)",
+            icon="manage_accounts",
+        ).props("dense").style(
+            f"color:{mut}; font-size:0.82rem; "
+            f"border:1px solid {bdr}; border-radius:8px; "
+            "margin-bottom:10px; width:100%;"
+        ):
+            ui.label(
+                "Grant users access to this bucket immediately after creation."
+            ).style(f"color:{mut}; font-size:0.78rem; margin-bottom:8px;")
+            cperm_col = ui.column().style("gap:6px; width:100%;")
+            ui.button(
+                "Add user", icon="add",
+                on_click=_cperm_add_row,
+            ).props("flat no-caps dense").style(
+                "color:#58a6ff; font-size:0.8rem; margin-top:4px;"
+            )
+
         err_create = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:16px;"):
             _cancel_btn(create_dlg, dark)
             _primary_btn(
                 "Create",
-                lambda: _create(s3, f_name.value, f_region.value,
-                                create_dlg, table, stats_row, err_create, dark),
+                lambda: _create(
+                    s3,
+                    f_name.value,
+                    f_region.value,
+                    create_dlg,
+                    table,
+                    stats_row,
+                    err_create,
+                    dark,
+                    permissions={
+                        uid_inp.value.strip(): lvl_sel.value
+                        for uid_inp, lvl_sel, _ in _cperm_rows
+                        if uid_inp.value.strip()
+                    },
+                ),
             )
 
     # ── Delete dialog ─────────────────────────────────────────────────────────
@@ -209,9 +294,10 @@ async def buckets_page() -> None:
             f"border-bottom:1px solid {'#21262d' if dark else '#d0d7de'}; "
             "margin-bottom:14px;"
         ) as btabs:
-            btab_pol  = ui.tab("Policy",     icon="policy")
-            btab_cors = ui.tab("CORS",        icon="public")
-            btab_ver  = ui.tab("Versioning",  icon="history")
+            btab_pol  = ui.tab("Policy",      icon="policy")
+            btab_cors = ui.tab("CORS",         icon="public")
+            btab_ver  = ui.tab("Versioning",   icon="history")
+            btab_perm = ui.tab("Permissions",  icon="manage_accounts")
 
         with ui.tab_panels(btabs, value=btab_pol).style("width:100%;"):
 
@@ -332,6 +418,71 @@ async def buckets_page() -> None:
                         "color:#e36209;"
                     )
 
+            # ── Permissions tab ───────────────────────────────────────────
+            with ui.tab_panel(btab_perm):
+                _pmut = "#8b949e" if dark else "#57606a"
+                _ptxt = "#e6edf3" if dark else "#1f2328"
+                _pbdr = "#21262d" if dark else "#d0d7de"
+                _pbg  = "#0d1117" if dark else "#f6f8fa"
+
+                ui.label("User Access Control").style(
+                    f"color:{_pmut}; font-size:0.7rem; font-weight:700; "
+                    "text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px;"
+                )
+                if not rgw:
+                    ui.label(
+                        "Enable Admin Mode + Admin Endpoint in Connection Settings "
+                        "to manage user permissions here."
+                    ).style(f"color:{_pmut}; font-size:0.82rem;")
+                else:
+                    bkt_ctx["perm_col"] = ui.column().style(
+                        "gap:6px; width:100%; min-height:40px;"
+                    )
+                    ui.separator().style(
+                        f"border-color:{_pbdr}; margin:12px 0;"
+                    )
+                    ui.label("Add user access").style(
+                        f"color:{_ptxt}; font-size:0.82rem; "
+                        "font-weight:600; margin-bottom:6px;"
+                    )
+                    with ui.row().style("align-items:center; gap:8px; width:100%;"):
+                        bkt_ctx["perm_uid"] = ui.select(
+                            options=[], label="User",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(
+                            f"background:{_pbg}; border:1px solid {_pbdr}; "
+                            f"border-radius:8px; color:{_ptxt}; flex:1;"
+                        )
+                        bkt_ctx["perm_lvl"] = ui.select(
+                            options={k: v for k, v in _PERM_LABELS.items()},
+                            value="read_write",
+                            label="Permission",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(
+                            f"background:{_pbg}; border:1px solid {_pbdr}; "
+                            f"border-radius:8px; color:{_ptxt}; width:150px;"
+                        )
+                        ui.button(
+                            icon="add",
+                            on_click=lambda: _add_perm(s3, bkt_ctx, dark),
+                        ).props("no-caps").style(
+                            "background:#1f6feb; color:#fff; border-radius:8px; "
+                            "font-weight:600; flex-shrink:0;"
+                        )
+                    bkt_ctx["perm_err"] = ui.label("").style(
+                        "color:#da3633; font-size:0.8rem; min-height:18px;"
+                    )
+                    with ui.row().style("margin-top:10px;"):
+                        ui.button(
+                            "Save Permissions", icon="save",
+                            on_click=lambda: _save_perms(s3, bkt_ctx, dark),
+                        ).props("no-caps").style(
+                            "background:#1f6feb; color:#fff; border-radius:8px; "
+                            "font-weight:600;"
+                        )
+
         with ui.row().style("justify-content:flex-end; margin-top:14px;"):
             ui.button("Close", on_click=bucket_dlg.close).props("flat no-caps").style(
                 f"color:{'#8b949e' if dark else '#57606a'};"
@@ -388,7 +539,7 @@ def _browse(row: dict) -> None:
 
 
 async def _create(s3, name: str, region: str, dialog, table, stats_row,
-                  err_lbl, dark: bool) -> None:
+                  err_lbl, dark: bool, permissions: dict | None = None) -> None:
     if not name.strip():
         err_lbl.set_text("Bucket name is required.")
         return
@@ -397,6 +548,18 @@ async def _create(s3, name: str, region: str, dialog, table, stats_row,
         await loop.run_in_executor(
             None, lambda: s3.create_bucket(name.strip(), region or "us-east-1")
         )
+        # Apply initial user permissions if any were specified
+        if permissions:
+            try:
+                await loop.run_in_executor(
+                    None,
+                    lambda: s3.set_bucket_user_permissions(name.strip(), permissions),
+                )
+            except Exception as perm_exc:
+                ui.notify(
+                    f"Bucket created but permissions error: {perm_exc}",
+                    type="warning",
+                )
         dialog.close()
         ui.notify(f"Bucket '{name}' created.", type="positive")
         await _reload(table, stats_row, s3, dark)
@@ -500,7 +663,7 @@ def _body_bg(dark: bool) -> None:
 
 # ── Bucket settings dialog helpers ────────────────────────────────────────────
 
-async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, dark: bool) -> None:
+async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, rgw, dark: bool) -> None:
     bucket = row.get("name", "")
     if not bucket:
         return
@@ -510,6 +673,8 @@ async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, dark: bool) -> No
     ctx["pol_err"].set_text("")
     ctx["cors_err"].set_text("")
     ctx["ver_err"].set_text("")
+    if "perm_err" in ctx:
+        ctx["perm_err"].set_text("")
     dlg.open()
 
     loop = asyncio.get_event_loop()
@@ -520,10 +685,15 @@ async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, dark: bool) -> No
         except Exception:
             return None
 
-    pol, cors_rules, ver = await asyncio.gather(
+    async def _empty():
+        return []
+
+    pol, cors_rules, ver, perms, users_list = await asyncio.gather(
         _safe(lambda: s3.get_bucket_policy(bucket)),
         _safe(lambda: s3.get_bucket_cors(bucket)),
         _safe(lambda: s3.get_bucket_versioning(bucket)),
+        _safe(lambda: s3.get_bucket_user_permissions(bucket)),
+        _safe(lambda: rgw.list_users()) if rgw else _empty(),
     )
     ctx["spinner"].style("display:none;")
 
@@ -541,7 +711,7 @@ async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, dark: bool) -> No
     # Versioning
     ver_str = ver or ""
     ctx["ver_status_lbl"].set_text(
-        f"● Enabled" if ver_str == "Enabled"
+        "● Enabled" if ver_str == "Enabled"
         else ("⊘ Suspended" if ver_str == "Suspended"
               else "— Never enabled")
     )
@@ -549,6 +719,18 @@ async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, dark: bool) -> No
         f"color:{'#3fb950' if ver_str == 'Enabled' else ('#da3633' if ver_str == 'Suspended' else '#8b949e')}; "
         "font-size:1.1rem; font-weight:700; margin-bottom:12px;"
     )
+
+    # Permissions (only if rgw is configured and panel exists)
+    if rgw and "perm_uid" in ctx:
+        cur_perms: dict = dict(perms or {})
+        ctx["_cur_perms"] = cur_perms
+        # Build user list for the dropdown (all users from RGW)
+        all_users = [u for u in (users_list or []) if isinstance(u, str)]
+        ctx["_all_users"] = all_users
+        ctx["perm_uid"].set_options(all_users)
+        if all_users:
+            ctx["perm_uid"].set_value(all_users[0])
+        _render_perms(ctx["perm_col"], cur_perms, ctx, s3, dark)
 
 
 async def _save_policy(s3, ctx: dict, dark: bool) -> None:
@@ -689,6 +871,118 @@ async def _set_versioning(s3, ctx: dict, status: str, dark: bool) -> None:
         ui.notify(f"Versioning {status.lower()}.", type="positive")
     except Exception as exc:
         ctx["ver_err"].set_text(str(exc))
+
+
+def _render_perms(col, perms: dict, ctx: dict, s3, dark: bool) -> None:
+    """Render current user-permission rows inside the Permissions tab panel."""
+    col.clear()
+    bg  = "#0d1117" if dark else "#f6f8fa"
+    bdr = "#21262d" if dark else "#d0d7de"
+    txt = "#e6edf3" if dark else "#1f2328"
+    mut = "#8b949e" if dark else "#57606a"
+    act = "#58a6ff" if dark else "#0969da"
+
+    with col:
+        if not perms:
+            ui.label("No user-level access configured.").style(
+                f"color:{mut}; font-size:0.82rem; padding:4px 0;"
+            )
+            return
+        for uid, level in perms.items():
+            with ui.card().style(
+                f"background:{bg}; border:1px solid {bdr}; "
+                "border-radius:8px; padding:8px 12px; width:100%;"
+            ):
+                with ui.row().style(
+                    "align-items:center; justify-content:space-between; width:100%;"
+                ):
+                    with ui.row().style("align-items:center; gap:8px;"):
+                        ui.icon("person").style(f"color:{act}; font-size:1.1rem;")
+                        ui.label(uid).style(
+                            f"color:{txt}; font-size:0.85rem; font-weight:600;"
+                        )
+                        ui.badge(_PERM_LABELS.get(level, level)).props(
+                            "outline"
+                        ).style(
+                            f"color:{act}; border-color:{act}; "
+                            "font-size:0.7rem; border-radius:4px; padding:2px 6px;"
+                        )
+                    ui.button(
+                        icon="remove_circle_outline",
+                        on_click=lambda _uid=uid: _remove_perm(_uid, ctx, s3, dark),
+                    ).props("flat round dense").style(
+                        "color:#da3633; flex-shrink:0;"
+                    )
+
+
+async def _remove_perm(uid: str, ctx: dict, s3, dark: bool) -> None:
+    """Remove a single user's bucket permission and save immediately."""
+    perms = dict(ctx.get("_cur_perms", {}))
+    perms.pop(uid, None)
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(
+            None,
+            lambda: s3.set_bucket_user_permissions(ctx["bucket"], perms),
+        )
+        ctx["_cur_perms"] = perms
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text("")
+        _render_perms(ctx["perm_col"], perms, ctx, s3, dark)
+        ui.notify(f"Access removed for '{uid}'.", type="warning")
+    except Exception as exc:
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text(str(exc))
+
+
+async def _add_perm(s3, ctx: dict, dark: bool) -> None:
+    """Add a user permission row and save immediately."""
+    uid   = (ctx["perm_uid"].value or "").strip()
+    level = ctx["perm_lvl"].value or "read_write"
+    if not uid:
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text("Select a user.")
+        return
+    perms = dict(ctx.get("_cur_perms", {}))
+    perms[uid] = level
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(
+            None,
+            lambda: s3.set_bucket_user_permissions(ctx["bucket"], perms),
+        )
+        ctx["_cur_perms"] = perms
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text("")
+        _render_perms(ctx["perm_col"], perms, ctx, s3, dark)
+        ui.notify(
+            f"Access granted to '{uid}' ({_PERM_LABELS.get(level, level)}).",
+            type="positive",
+        )
+    except Exception as exc:
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text(str(exc))
+
+
+async def _save_perms(s3, ctx: dict, dark: bool) -> None:
+    """Explicitly (re-)save the current permissions in _cur_perms."""
+    perms  = dict(ctx.get("_cur_perms", {}))
+    bucket = ctx.get("bucket", "")
+    if not bucket:
+        return
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(
+            None,
+            lambda: s3.set_bucket_user_permissions(bucket, perms),
+        )
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text("")
+        _render_perms(ctx["perm_col"], perms, ctx, s3, dark)
+        ui.notify("Permissions saved.", type="positive")
+    except Exception as exc:
+        if "perm_err" in ctx:
+            ctx["perm_err"].set_text(str(exc))
 
 
 def _open_create(dlg, f_name, f_region, err, conn: dict) -> None:

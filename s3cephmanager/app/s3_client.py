@@ -255,6 +255,120 @@ class S3Manager:
     def delete_bucket_policy(self, bucket: str) -> None:
         self.client.delete_bucket_policy(Bucket=bucket)
 
+    # ── Bucket User Permissions (via S3 Bucket Policy) ────────────────────────
+    #
+    # Permissions are stored as standard S3 bucket policy statements whose
+    # Sid begins with "_CephS3Mgr-".  Any other statements are preserved.
+    #
+    # Levels:
+    #   "read"       → GetObject, ListBucket (download / browse)
+    #   "write"      → PutObject, DeleteObject (upload / delete)
+    #   "read_write" → read + write
+    #   "full"       → s3:*
+
+    _PERM_SID_PREFIX = "_CephS3Mgr-"
+    _PERM_ACTIONS: "dict[str, list[str]]" = {
+        "read": [
+            "s3:GetObject", "s3:GetObjectVersion", "s3:GetObjectAcl",
+            "s3:ListBucket", "s3:ListBucketVersions",
+            "s3:GetBucketLocation", "s3:ListMultipartUploadParts",
+            "s3:ListBucketMultipartUploads",
+        ],
+        "write": [
+            "s3:PutObject", "s3:DeleteObject",
+            "s3:AbortMultipartUpload", "s3:PutObjectAcl",
+        ],
+        "read_write": [
+            "s3:GetObject", "s3:GetObjectVersion", "s3:GetObjectAcl",
+            "s3:ListBucket", "s3:ListBucketVersions",
+            "s3:GetBucketLocation", "s3:ListMultipartUploadParts",
+            "s3:ListBucketMultipartUploads",
+            "s3:PutObject", "s3:DeleteObject",
+            "s3:AbortMultipartUpload", "s3:PutObjectAcl",
+        ],
+        "full": ["s3:*"],
+    }
+
+    def get_bucket_user_permissions(self, bucket: str) -> "dict[str, str]":
+        """Parse bucket policy and return {uid: level} for CephS3Mgr statements."""
+        import json as _j
+        raw = self.get_bucket_policy(bucket) or ""
+        if not raw:
+            return {}
+        try:
+            policy = _j.loads(raw)
+        except Exception:
+            return {}
+        result: "dict[str, str]" = {}
+        pfx = self._PERM_SID_PREFIX
+        for stmt in policy.get("Statement", []):
+            sid = stmt.get("Sid", "")
+            if not sid.startswith(pfx):
+                continue
+            uid = sid[len(pfx):]
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            aset = set(actions)
+            if "s3:*" in aset:
+                result[uid] = "full"
+            elif {"s3:PutObject", "s3:GetObject"} <= aset:
+                result[uid] = "read_write"
+            elif "s3:PutObject" in aset:
+                result[uid] = "write"
+            else:
+                result[uid] = "read"
+        return result
+
+    def set_bucket_user_permissions(
+        self, bucket: str, permissions: "dict[str, str]"
+    ) -> None:
+        """Apply user access permissions to bucket via S3 bucket policy.
+
+        Existing statements NOT created by CephS3Manager are preserved.
+        Passing an empty *permissions* dict removes all manager statements;
+        if no other statements remain, the policy is deleted entirely.
+        """
+        import json as _j
+        raw = self.get_bucket_policy(bucket) or ""
+        try:
+            existing = _j.loads(raw) if raw else {"Version": "2012-10-17", "Statement": []}
+        except Exception:
+            existing = {"Version": "2012-10-17", "Statement": []}
+
+        pfx = self._PERM_SID_PREFIX
+        # Keep statements not owned by this manager
+        kept = [
+            s for s in existing.get("Statement", [])
+            if not s.get("Sid", "").startswith(pfx)
+        ]
+        # Build new statements for each user
+        new_stmts = []
+        for uid, level in permissions.items():
+            uid = uid.strip()
+            if not uid or level not in self._PERM_ACTIONS:
+                continue
+            new_stmts.append({
+                "Sid":       f"{pfx}{uid}",
+                "Effect":    "Allow",
+                "Principal": {"AWS": [f"arn:aws:iam:::user/{uid}"]},
+                "Action":    self._PERM_ACTIONS[level],
+                "Resource":  [
+                    f"arn:aws:s3:::{bucket}",
+                    f"arn:aws:s3:::{bucket}/*",
+                ],
+            })
+
+        all_stmts = kept + new_stmts
+        if all_stmts:
+            policy = {"Version": "2012-10-17", "Statement": all_stmts}
+            self.put_bucket_policy(bucket, _j.dumps(policy))
+        else:
+            try:
+                self.delete_bucket_policy(bucket)
+            except Exception:
+                pass
+
     # ── CORS ──────────────────────────────────────────────────────────────────
 
     def get_bucket_cors(self, bucket: str) -> list[dict]:
