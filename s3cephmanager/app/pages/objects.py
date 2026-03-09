@@ -74,6 +74,7 @@ async def objects_page() -> None:
         "next_token":    None,  # continuation token for pagination
         "load_more_ref": None,  # set after widget is created
         "page_size":     page_size,
+        "all_rows":      [],    # full row snapshot used by live search
     }
 
     # Palette
@@ -127,9 +128,9 @@ async def objects_page() -> None:
                     search = ui.input(placeholder="Search…").props(
                         "dense outlined dark" if dark else "dense outlined"
                     ).style(_inp(dark) + "width:200px;")
-                    search.on("input", lambda e: table.run_method(
-                        "filterMethod", e.sender.value
-                    ))
+                    search.on("input",
+                              lambda e: _apply_search(table, state,
+                                                      e.sender.value or ""))
                     ui.button(
                         icon="refresh",
                         on_click=lambda: _reload(table, tree_list, brow, s3, bucket, state, dark),
@@ -250,6 +251,17 @@ async def objects_page() -> None:
                     <q-btn flat dense round icon="delete"   color="red-4"    size="xs"
                            @click="$parent.$emit('del_one', props.row)"><q-tooltip>Delete</q-tooltip></q-btn>
                   </template>
+                </q-td>
+            """)
+
+            # Modified-date column – formatted client-side (browser local timezone)
+            table.add_slot("body-cell-mtime", r"""
+                <q-td :props="props" style="white-space:nowrap; font-size:0.83rem;">
+                  {{ props.row.mtime > 0
+                      ? new Date(props.row.mtime).toLocaleString([], {
+                            year:'numeric', month:'2-digit', day:'2-digit',
+                            hour:'2-digit', minute:'2-digit'})
+                      : '—' }}
                 </q-td>
             """)
 
@@ -559,6 +571,23 @@ async def objects_page() -> None:
 #  Navigation + data loading
 # ═════════════════════════════════════════════════════════════════════════════
 
+def _apply_search(table, state: dict, query: str) -> None:
+    """Filter table rows in-place by name query (live search, no network call)."""
+    q = query.strip().lower()
+    all_rows = state.get("all_rows", [])
+    if q:
+        # Always keep the ".." navigation row at the top; filter everything else
+        nav   = [r for r in all_rows if r["type"] == "up"]
+        rest  = [r for r in all_rows if r["type"] != "up"
+                 and q in r["name"].lower()]
+        visible = nav + rest
+    else:
+        visible = list(all_rows)
+    table.rows.clear()
+    table.rows.extend(visible)
+    table.update()
+
+
 async def _reload(
     table, tree_list, brow,
     s3, bucket: str, state: dict, dark: bool,
@@ -590,14 +619,14 @@ async def _reload(
             "type":  "up",
             "name":  "..",
             "size":  "",
-            "mtime": "",
+            "mtime": 0,
         })
 
     # Folder rows
     for pref in data["prefixes"]:
         name = pref[len(state["prefix"]):]
         rows.append({"key": pref, "type": "folder",
-                     "name": name, "size": "—", "mtime": "—"})
+                     "name": name, "size": "—", "mtime": 0})
 
     # File rows
     for obj in data["objects"]:
@@ -605,15 +634,17 @@ async def _reload(
         name = key[len(state["prefix"]):]
         if not name:           # skip empty placeholder for current prefix
             continue
+        lm = obj.get("LastModified")
         rows.append({
             "key":   key,
             "type":  "file",
             "name":  name,
             "size":  humanize.naturalsize(obj.get("Size", 0)),
-            "mtime": (obj["LastModified"].strftime("%Y-%m-%d %H:%M")
-                      if obj.get("LastModified") else "—"),
+            # epoch-ms so the JS slot can convert to browser local timezone
+            "mtime": int(lm.timestamp() * 1000) if lm else 0,
         })
 
+    state["all_rows"] = list(rows)   # snapshot for live-search filtering
     table.rows.clear()
     table.rows.extend(rows)
     table.update()
@@ -659,15 +690,16 @@ async def _load_more(
         name = key[len(state["prefix"]):]
         if not name:
             continue
+        lm = obj.get("LastModified")
         new_rows.append({
             "key":   key,
             "type":  "file",
             "name":  name,
             "size":  humanize.naturalsize(obj.get("Size", 0)),
-            "mtime": (obj["LastModified"].strftime("%Y-%m-%d %H:%M")
-                      if obj.get("LastModified") else "—"),
+            "mtime": int(lm.timestamp() * 1000) if lm else 0,
         })
 
+    state.setdefault("all_rows", []).extend(new_rows)  # keep snapshot in sync
     table.rows.extend(new_rows)
     table.update()
     load_more_row.set_visibility(bool(state["next_token"]))
