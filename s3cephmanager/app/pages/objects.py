@@ -53,37 +53,44 @@ import humanize
 #  (browsers block cross-origin S3 presigned URLs inside <iframe> / <object>)
 # ─────────────────────────────────────────────────────────────────────────────
 
-_preview_tokens: dict[str, str] = {}   # token → presigned_url
+_preview_tokens: dict[str, dict] = {}   # token → {"url": str, "ct": str}
 _MAX_PREVIEW_TOKENS = 200
 
 
-def _register_preview_token(presigned_url: str) -> str:
-    """Store a presigned URL under a random token; return the token."""
+def _register_preview_token(
+    presigned_url: str,
+    content_type: str = "application/octet-stream",
+) -> str:
+    """Store a presigned URL + forced content-type under a random token; return the token."""
     token = _uuid.uuid4().hex
     if len(_preview_tokens) >= _MAX_PREVIEW_TOKENS:
         # Evict oldest entry to keep memory bounded
         _preview_tokens.pop(next(iter(_preview_tokens)), None)
-    _preview_tokens[token] = presigned_url
+    _preview_tokens[token] = {"url": presigned_url, "ct": content_type}
     return token
 
 
 @app.get("/api/preview/{token}")
 async def _preview_proxy_route(token: str):
-    """Proxy S3 presigned content through our server (same origin → no CORS / X-Frame issues)."""
+    """Proxy S3 presigned content through our server (same origin → no CORS / X-Frame issues).
+    Uses the content-type stored at token-registration time so the browser always
+    receives the correct MIME type even when Ceph/S3 returns 'application/octet-stream'.
+    """
     import requests as _req
-    purl = _preview_tokens.get(token)
-    if not purl:
+    entry = _preview_tokens.get(token)
+    if not entry:
         return _FastAPIResponse(status_code=404, content=b"Preview not found or expired.")
+    purl     = entry["url"]
+    forced_ct = entry["ct"]
     loop = asyncio.get_event_loop()
     try:
         r = await loop.run_in_executor(
             None, lambda: _req.get(purl, timeout=60, verify=False)
         )
         r.raise_for_status()
-        ct = r.headers.get("content-type", "application/octet-stream")
         return _FastAPIResponse(
             content=r.content,
-            media_type=ct,
+            media_type=forced_ct,          # ← always use our stored type, not Ceph's
             headers={"Content-Disposition": "inline", "Cache-Control": "no-store"},
         )
     except Exception as exc:
@@ -129,15 +136,17 @@ async def objects_page() -> None:
 
     # ── Outer wrapper (fills viewport below header) ───────────────────────────
     with ui.row().style(
-        f"width:100%; height:calc(100vh - 56px); gap:0; "
+        f"width:100%; height:calc(100vh - 56px); gap:0; padding:0; "
         f"background:{C['bg']}; align-items:stretch; overflow:hidden;"
     ):
 
         # ── LEFT  Folder-tree panel ───────────────────────────────────────────
+        # min-height:0 is required so that as a flex-child it can shrink below
+        # its content height and let overflow-y:auto trigger a scrollbar.
         left_panel = ui.column().style(
             f"width:240px; min-width:240px; background:{C['sbg']}; "
             f"border-right:1px solid {C['bdr']}; padding:10px 0; "
-            "overflow-y:auto; flex-shrink:0; gap:0;"
+            "overflow-y:auto; flex-shrink:0; min-height:0; gap:0;"
         )
         with left_panel:
             ui.label("FOLDERS").style(
@@ -147,8 +156,10 @@ async def objects_page() -> None:
             tree_list = ui.column().style("gap:1px; width:100%;")
 
         # ── RIGHT  Main panel ─────────────────────────────────────────────────
+        # min-height:0 + overflow-y:auto = the right column scrolls when
+        # content exceeds the flex-container height (calc(100vh - 56px)).
         with ui.column().style(
-            "flex:1; min-width:0; padding:18px 22px; gap:12px; "
+            "flex:1; min-width:0; min-height:0; padding:18px 22px; gap:12px; "
             "overflow-y:auto;"
         ):
 
@@ -1411,7 +1422,9 @@ async def _show_preview(
             # Route the presigned URL through our own FastAPI proxy so the
             # browser treats it as same-origin — avoids X-Frame-Options /
             # CSP blocks that Ceph RGW / S3 backends typically set.
-            token = _register_preview_token(url)
+            # Pass "application/pdf" explicitly so the proxy always returns the
+            # correct MIME type even when Ceph responds with application/octet-stream.
+            token = _register_preview_token(url, "application/pdf")
             ui.html(
                 f'<iframe src="/api/preview/{token}" '
                 f'style="width:100%; height:68vh; border:none; '
