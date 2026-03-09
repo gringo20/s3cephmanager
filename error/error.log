@@ -1,190 +1,82 @@
-[e.cauca@DevOps-admins ~]$ kubectl exec -n rook-ceph -it   $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}')   -- radosgw-admin user info --uid=s3admin
-{
-    "user_id": "s3admin",
-    "display_name": "S3 Admin",
-    "email": "",
-    "suspended": 0,
-    "max_buckets": 1000,
-    "subusers": [],
-    "keys": [
-        {
-            "user": "s3admin",
-            "access_key": "4KCA0TM1FB1IWH3X1ONB",
-            "secret_key": "JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz",
-            "active": true,
-            "create_date": "2026-03-06T08:26:26.431159Z"
-        }
-    ],
-    "swift_keys": [],
-    "caps": [
-        {
-            "type": "buckets",
-            "perm": "*"
-        },
-        {
-            "type": "metadata",
-            "perm": "*"
-        },
-        {
-            "type": "usage",
-            "perm": "*"
-        },
-        {
-            "type": "users",
-            "perm": "*"
-        },
-        {
-            "type": "zone",
-            "perm": "*"
-        }
-    ],
-    "op_mask": "read, write, delete",
-    "admin": true,
-    "default_placement": "",
-    "default_storage_class": "",
-    "placement_tags": [],
-    "bucket_quota": {
-        "enabled": false,
-        "check_on_raw": false,
-        "max_size": -1,
-        "max_size_kb": 0,
-        "max_objects": -1
-    },
-    "user_quota": {
-        "enabled": false,
-        "check_on_raw": false,
-        "max_size": -1,
-        "max_size_kb": 0,
-        "max_objects": -1
-    },
-    "temp_url_keys": [],
-    "type": "rgw",
-    "mfa_ids": [],
-    "account_id": "",
-    "path": "/",
-    "create_date": "2026-03-06T08:26:26.430370Z",
-    "tags": [],
-    "group_ids": []
-}
+Înțeleg — CRD-ul a fost aplicat dar Rook nu a creat încă userul în Ceph. Să verificăm de ce și avem un fallback rapid:
 
-[e.cauca@DevOps-admins ~]$ kubectl exec -n rook-ceph -it \
+## Pasul 1 — Verifică statusul CRD-ului
+
+```bash
+kubectl get cephobjectstoreuser -n rook-ceph
+kubectl describe cephobjectstoreuser -n rook-ceph s3admin 2>/dev/null || echo "CRD nu exista inca"
+```
+
+## Pasul 2 — Verifică log-urile operatorului Rook
+
+```bash
+kubectl logs -n rook-ceph deploy/rook-ceph-operator --tail=50 \
+  | grep -iE "s3admin|objectstoreuser|user|error" | tail -20
+```
+
+---
+
+## Dacă CRD-ul nu funcționează — creează userul direct via radosgw-admin
+
+Acesta este fallback-ul cel mai simplu și funcționează identic. CRD-ul e doar o metodă convenabilă — userul creat manual funcționează la fel:
+
+```bash
+kubectl exec -n rook-ceph -it \
   $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
-  -- radosgw-admin caps add \
+  -- bash -c '
+# Creează userul cu toate capabilitățile dintr-o singură comandă
+radosgw-admin user create \
+  --uid=s3admin \
+  --display-name="S3 Admin" \
+  --caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
+
+echo ""
+echo "=== CREDENTIALE ==="
+radosgw-admin user info --uid=s3admin | python3 -c "
+import json, sys
+u = json.load(sys.stdin)
+k = u[\"keys\"][0]
+print(\"AccessKey:\", k[\"access_key\"])
+print(\"SecretKey:\", k[\"secret_key\"])
+print()
+print(\"Caps:\")
+for c in u[\"caps\"]:
+    print(f\"  {c[\"type\"]:12} = {c[\"perm\"]}\")
+"
+'
+```
+
+Dacă preferi să setezi tu credențialele (nu generate random):
+
+```bash
+kubectl exec -n rook-ceph -it \
+  $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
+  -- radosgw-admin user create \
      --uid=s3admin \
+     --display-name="S3 Admin" \
+     --access-key="s3AdminAccessKey2026" \
+     --secret-key="s3AdminSecretKey2026SuperSecret" \
      --caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
-{
-    "user_id": "s3admin",
-    "display_name": "S3 Admin",
-    "email": "",
-    "suspended": 0,
-    "max_buckets": 1000,
-    "subusers": [],
-    "keys": [
-        {
-            "user": "s3admin",
-            "access_key": "4KCA0TM1FB1IWH3X1ONB",
-            "secret_key": "JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz",
-            "active": true,
-            "create_date": "2026-03-06T08:26:26.431159Z"
-        }
-    ],
-    "swift_keys": [],
-    "caps": [
-        {
-            "type": "buckets",
-            "perm": "*"
-        },
-        {
-            "type": "metadata",
-            "perm": "*"
-        },
-        {
-            "type": "usage",
-            "perm": "*"
-        },
-        {
-            "type": "users",
-            "perm": "*"
-        },
-        {
-            "type": "zone",
-            "perm": "*"
-        }
-    ],
-    "op_mask": "read, write, delete",
-    "admin": true,
-    "default_placement": "",
-    "default_storage_class": "",
-    "placement_tags": [],
-    "bucket_quota": {
-        "enabled": false,
-        "check_on_raw": false,
-        "max_size": -1,
-        "max_size_kb": 0,
-        "max_objects": -1
-    },
-    "user_quota": {
-        "enabled": false,
-        "check_on_raw": false,
-        "max_size": -1,
-        "max_size_kb": 0,
-        "max_objects": -1
-    },
-    "temp_url_keys": [],
-    "type": "rgw",
-    "mfa_ids": [],
-    "account_id": "",
-    "path": "/",
-    "create_date": "2026-03-06T08:26:26.430370Z",
-    "tags": [],
-    "group_ids": []
-}
+```
 
-[e.cauca@DevOps-admins ~]$
+---
 
+## Testează imediat după creare
 
-I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$
-I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$ python3 -c "
-import requests
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
-from botocore.credentials import Credentials
+```bash
+kubectl exec -n rook-ceph -it \
+  $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
+  -- python3 -c "
+import subprocess, json
+out = subprocess.check_output(['radosgw-admin', 'user', 'info', '--uid=s3admin'])
+u = json.loads(out)
+k = u['keys'][0]
+print('AccessKey:', k['access_key'])
+print('SecretKey:', k['secret_key'])
+print('Caps OK:', len(u['caps']) >= 4)
+"
+```
 
-# ─── COMPLETEAZĂ AICI ───
-ACCESS_KEY = '4KCA0TM1FB1IWH3X1ONB'
-SECRET_KEY = 'JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz'  # ← schimbă cu secretul real
-REGION     = 'us-east-1'
-ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
-# ─────────────────────────
+---
 
-url = f'{ENDPOINT}/admin/metadata/user'
-creds = Credentials(ACCESS_KEY, SECRET_KEY)
-req = AWSRequest(method='GET', url=url, data=b'')
-SigV4Auth(creds, 's3', REGION).add_auth(req)
-resp = requests.get(url, headers=dict(req.headers))
-print('STATUS:', resp.status_code)
-print('BODY:  ', resp.text)
-> ^C
-I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$ python3 -c "
-import requests
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
-from botocore.credentials import Credentials
-
-# ─── COMPLETEAZĂ AICI ───
-ACCESS_KEY = '4KCA0TM1FB1IWH3X1ONB'
-SECRET_KEY = 'JZxuVRqIdNRqxrYvSNzTNj4HHARQBk5a0PoWxSyz'  # ← schimbă cu secretul real
-REGION     = 'us-east-1'
-ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
-# ─────────────────────────
-
-url = f'{ENDPOINT}/admin/metadata/user'
-creds = Credentials(ACCESS_KEY, SECRET_KEY)
-req = AWSRequest(method='GET', url=url, data=b'')
-SigV4Auth(creds, 's3', REGION).add_auth(req)
-resp = requests.get(url, headers=dict(req.headers))
-print('STATUS:', resp.status_code)
-print('BODY:  ', resp.text)"
-STATUS: 403
-BODY:   {"Code":"InvalidAccessKeyId","Message":"","RequestId":"tx00000b17992df034f54b1-0069ae8d3d-11604713-ceph-objectstore","HostId":"11604713-ceph-objectstore-ceph-objectstore"}
-I have no name!@cephs3manager-66dd74b9bf-z6dv7:/app$
+Trimite output-ul de la `kubectl describe cephobjectstoreuser -n rook-ceph s3admin` și/sau log-urile operatorului — să vedem exact de ce CRD-ul nu creează userul. Între timp, crearea manuală via radosgw-admin va rezolva problema imediat.
