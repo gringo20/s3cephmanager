@@ -148,7 +148,7 @@ def _render_drawer(dark: bool, conn: dict | None, current_path: str) -> None:
     mut = _t("muted",   dark)
     txt = _t("text",    dark)
 
-    with ui.left_drawer(top_corner=True, bottom_corner=True).style(
+    with ui.left_drawer(top_corner=True, bottom_corner=True, value=True).style(
         f"background:{sb}; border-right:1px solid {bdr}; width:220px;"
     ):
         # Logo block
