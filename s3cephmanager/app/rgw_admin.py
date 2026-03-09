@@ -23,13 +23,30 @@ from typing import Any, Optional
 
 import requests
 import urllib3
-from botocore.auth import SigV4Auth
+from botocore.auth import SigV4Auth, UNSIGNED_PAYLOAD as _UNSIGNED_PAYLOAD
 from botocore.awsrequest import AWSRequest
 from botocore.credentials import Credentials
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 log = logging.getLogger("cephs3mgr.rgw")
+
+
+# ── SigV4 signing helper ──────────────────────────────────────────────────────
+
+class _RGWAdminAuth(SigV4Auth):
+    """SigV4Auth that uses UNSIGNED-PAYLOAD for the canonical payload hash.
+
+    boto3's S3 client uses UNSIGNED-PAYLOAD (not the actual SHA-256 of the
+    body) in the canonical request.  Ceph RGW Admin API enforces the same
+    convention: it expects the ``x-amz-content-sha256`` header to be present
+    and set to ``UNSIGNED-PAYLOAD``.  Using the actual empty-body hash
+    (``e3b0c44298...``) causes ``SignatureDoesNotMatch`` even when the key
+    and secret are correct.
+    """
+
+    def payload(self, request: AWSRequest) -> str:  # type: ignore[override]
+        return _UNSIGNED_PAYLOAD
 
 
 # ── Custom exception ──────────────────────────────────────────────────────────
@@ -77,9 +94,15 @@ class RGWAdminClient:
         qp   = {k: str(v) for k, v in (params or {}).items()}
         log.debug("RGW %s /admin%s params=%s", method.upper(), path, list(qp.keys()))
 
-        # Sign with SigV4 (empty body — Admin Ops never sends a body)
-        aws_req = AWSRequest(method=method.upper(), url=url, params=qp, data=b"")
-        SigV4Auth(self.credentials, "s3", self.region).add_auth(aws_req)
+        # Sign with SigV4 using UNSIGNED-PAYLOAD convention (matches boto3 S3).
+        # The x-amz-content-sha256 header must be present and signed;
+        # Ceph RGW Admin API returns SignatureDoesNotMatch if it is absent
+        # or if the actual SHA-256 hash is used instead of UNSIGNED-PAYLOAD.
+        aws_req = AWSRequest(
+            method=method.upper(), url=url, params=qp, data=b"",
+            headers={"x-amz-content-sha256": _UNSIGNED_PAYLOAD},
+        )
+        _RGWAdminAuth(self.credentials, "s3", self.region).add_auth(aws_req)
 
         resp = self._session.request(
             method, url,

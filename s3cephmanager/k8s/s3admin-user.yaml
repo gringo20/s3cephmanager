@@ -24,9 +24,17 @@ metadata:
 spec:
   store: ceph-objectstore
   displayName: "S3 Admin"
+  # Capabilități admin complete — permite gestionarea utilizatorilor și bucket-urilor
+  # Documentație Rook: https://rook.io/docs/rook/latest-release/CRDs/Object-Storage/ceph-object-store-user-crd/
+  # Documentație Ceph: https://docs.ceph.com/en/latest/radosgw/admin/#add-remove-admin-capabilities
   capabilities:
+    # user / users → permite creare, modificare, ștergere utilizatori
     user: "*"
+    # bucket / buckets → permite creare, ștergere, modificare bucket-uri
     bucket: "*"
+    # metadata → permite listarea și citirea metadatelor (necesar pentru list_users)
     metadata: "*"
+    # usage → permite citirea statisticilor de utilizare
     usage: "*"
+    # zone → permite citirea informațiilor despre zonă
     zone: "*"
