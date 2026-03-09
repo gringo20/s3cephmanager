@@ -90,7 +90,13 @@ class RGWAdminClient:
         )
 
         if not resp.ok:
-            log.warning("RGW %s /admin%s → HTTP %s", method.upper(), path, resp.status_code)
+            # Log full response body so the exact Ceph error code is visible
+            # (SignatureDoesNotMatch / AccessDenied / InvalidAccessKeyId …)
+            log.warning(
+                "RGW %s /admin%s → HTTP %s  body=%r",
+                method.upper(), path, resp.status_code,
+                resp.text[:300],
+            )
             _raise_rgw_error(resp)
 
         return resp.json() if resp.content else {}

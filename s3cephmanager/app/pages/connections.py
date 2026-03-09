@@ -393,9 +393,13 @@ async def _connect(conn: dict) -> None:
 async def _delete(conn_id: int, cards: ui.column, dark: bool,
                   dialog, form: dict) -> None:
     await models.delete_connection(conn_id)
+    # ui.notify MUST be called BEFORE _render_cards() because
+    # _render_cards calls container.clear() which destroys the card
+    # element that owns the current slot context.  Calling notify
+    # after clear() raises "parent element has been deleted".
+    ui.notify("Connection deleted.", type="warning")
     conns = await models.list_connections()
     _render_cards(cards, conns, dark, dialog, form)
-    ui.notify("Connection deleted.", type="warning")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
