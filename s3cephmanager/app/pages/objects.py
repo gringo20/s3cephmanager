@@ -240,9 +240,11 @@ async def objects_page() -> None:
                 pagination={"rowsPerPage": 25, "sortBy": "name"},
                 # Keep Python-side pagination in sync so table.update() after
                 # search/reload doesn't reset the user's chosen rows-per-page.
+                # NiceGUI fires on_pagination_change as ValueChangeEventArguments
+                # → new value is in e.value (not e.args).
                 on_pagination_change=lambda e: (
-                    table._props.update({"pagination": e.args})
-                    if isinstance(e.args, dict) else None
+                    table._props.update({"pagination": e.value})
+                    if isinstance(e.value, dict) else None
                 ),
             ).style(
                 f"background:{C['tbg']}; border:1px solid {C['bdr']}; "
