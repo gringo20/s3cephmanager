@@ -298,6 +298,7 @@ async def buckets_page() -> None:
             btab_cors = ui.tab("CORS",         icon="public")
             btab_ver  = ui.tab("Versioning",   icon="history")
             btab_perm = ui.tab("Permissions",  icon="manage_accounts")
+            btab_lc   = ui.tab("Lifecycle",    icon="schedule")
 
         with ui.tab_panels(btabs, value=btab_pol).style("width:100%;"):
 
@@ -482,6 +483,109 @@ async def buckets_page() -> None:
                             "background:#1f6feb; color:#fff; border-radius:8px; "
                             "font-weight:600;"
                         )
+
+            # ── Lifecycle tab ──────────────────────────────────────────────
+            with ui.tab_panel(btab_lc):
+                _lmut = "#8b949e" if dark else "#57606a"
+                _ltxt = "#e6edf3" if dark else "#1f2328"
+                _lbdr = "#21262d" if dark else "#d0d7de"
+                _lbg  = "#0d1117" if dark else "#f6f8fa"
+
+                ui.label("Lifecycle Rules").style(
+                    f"color:{_lmut}; font-size:0.7rem; font-weight:700; "
+                    "text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px;"
+                )
+                bkt_ctx["lc_col"] = ui.column().style(
+                    "gap:8px; width:100%; min-height:40px;"
+                )
+
+                ui.separator().style(f"border-color:{_lbdr}; margin:12px 0;")
+                ui.label("Add / Update Rule").style(
+                    f"color:{_ltxt}; font-size:0.82rem; font-weight:600; margin-bottom:8px;"
+                )
+                with ui.row().style("gap:8px; width:100%; align-items:flex-start;"):
+                    with ui.column().style("gap:4px; flex:1;"):
+                        ui.label("Rule ID (optional)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_id"] = ui.input(
+                            placeholder="auto-generated if blank"
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(_inp(dark))
+                    with ui.column().style("gap:4px; flex:1;"):
+                        ui.label("Prefix filter (blank = all objects)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_prefix"] = ui.input(
+                            placeholder="e.g. uploads/"
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(_inp(dark))
+
+                with ui.row().style(
+                    "gap:8px; width:100%; margin-top:8px; align-items:flex-start;"
+                ):
+                    with ui.column().style("gap:4px; flex:1;"):
+                        ui.label("Expire objects (days, 0 = off)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_exp_days"] = ui.number(
+                            value=0, min=0, step=1, format="%.0f",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(
+                            f"background:{_lbg}; border:1px solid {_lbdr}; "
+                            f"border-radius:8px; color:{_ltxt}; width:100%;"
+                        )
+                    with ui.column().style("gap:4px; flex:1;"):
+                        ui.label("Old versions (days, 0 = off)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_noncur_days"] = ui.number(
+                            value=0, min=0, step=1, format="%.0f",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(
+                            f"background:{_lbg}; border:1px solid {_lbdr}; "
+                            f"border-radius:8px; color:{_ltxt}; width:100%;"
+                        )
+                    with ui.column().style("gap:4px; flex:1;"):
+                        ui.label("Abort multipart (days, 0 = off)").style(
+                            f"color:{_lmut}; font-size:0.72rem; font-weight:600; "
+                            "text-transform:uppercase; letter-spacing:0.06em;"
+                        )
+                        bkt_ctx["lc_abort_days"] = ui.number(
+                            value=0, min=0, step=1, format="%.0f",
+                        ).props(
+                            "dense outlined dark" if dark else "dense outlined"
+                        ).style(
+                            f"background:{_lbg}; border:1px solid {_lbdr}; "
+                            f"border-radius:8px; color:{_ltxt}; width:100%;"
+                        )
+
+                bkt_ctx["lc_enabled"] = ui.checkbox("Rule enabled", value=True).style(
+                    f"color:{_ltxt}; margin-top:8px;"
+                )
+                bkt_ctx["lc_err"] = ui.label("").style(
+                    "color:#da3633; font-size:0.8rem; min-height:18px;"
+                )
+                with ui.row().style("gap:8px; margin-top:6px;"):
+                    ui.button(
+                        "Add / Update Rule", icon="add_circle",
+                        on_click=lambda: _add_lifecycle_rule(s3, bkt_ctx, dark),
+                    ).props("no-caps").style(
+                        "background:#1f6feb; color:#fff; "
+                        "border-radius:8px; font-weight:600;"
+                    )
+                    ui.button(
+                        "Delete All Rules", icon="delete_sweep",
+                        on_click=lambda: _delete_all_lifecycle(s3, bkt_ctx, dark),
+                    ).props("no-caps flat").style("color:#da3633;")
 
         with ui.row().style("justify-content:flex-end; margin-top:14px;"):
             ui.button("Close", on_click=bucket_dlg.close).props("flat no-caps").style(
@@ -688,12 +792,13 @@ async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, rgw, dark: bool) 
     async def _empty():
         return []
 
-    pol, cors_rules, ver, perms, users_list = await asyncio.gather(
+    pol, cors_rules, ver, perms, users_list, lc_rules = await asyncio.gather(
         _safe(lambda: s3.get_bucket_policy(bucket)),
         _safe(lambda: s3.get_bucket_cors(bucket)),
         _safe(lambda: s3.get_bucket_versioning(bucket)),
         _safe(lambda: s3.get_bucket_user_permissions(bucket)),
         _safe(lambda: rgw.list_users()) if rgw else _empty(),
+        _safe(lambda: s3.get_bucket_lifecycle(bucket)),
     )
     ctx["spinner"].style("display:none;")
 
@@ -731,6 +836,13 @@ async def _open_bucket_settings(row: dict, dlg, ctx: dict, s3, rgw, dark: bool) 
         if all_users:
             ctx["perm_uid"].set_value(all_users[0])
         _render_perms(ctx["perm_col"], cur_perms, ctx, s3, dark)
+
+    # Lifecycle
+    ctx["_lc_rules"] = list(lc_rules or [])
+    if "lc_col" in ctx:
+        if "lc_err" in ctx:
+            ctx["lc_err"].set_text("")
+        _render_lifecycle_rules(ctx["lc_col"], ctx["_lc_rules"], ctx, s3, dark)
 
 
 async def _save_policy(s3, ctx: dict, dark: bool) -> None:
@@ -983,6 +1095,168 @@ async def _save_perms(s3, ctx: dict, dark: bool) -> None:
     except Exception as exc:
         if "perm_err" in ctx:
             ctx["perm_err"].set_text(str(exc))
+
+
+def _render_lifecycle_rules(col, rules: list, ctx: dict, s3, dark: bool) -> None:
+    """Render existing lifecycle rule cards inside the Lifecycle tab panel."""
+    col.clear()
+    bg  = "#0d1117" if dark else "#f6f8fa"
+    bdr = "#21262d" if dark else "#d0d7de"
+    txt = "#e6edf3" if dark else "#1f2328"
+    mut = "#8b949e" if dark else "#57606a"
+
+    with col:
+        if not rules:
+            ui.label("No lifecycle rules configured.").style(
+                f"color:{mut}; font-size:0.82rem; padding:4px 0;"
+            )
+            return
+        for rule in rules:
+            rule_id = rule.get("ID", "—")
+            status  = rule.get("Status", "Enabled")
+            flt     = rule.get("Filter") or {}
+            prefix  = flt.get("Prefix", "")
+            exp     = (rule.get("Expiration") or {}).get("Days")
+            noncur  = (rule.get("NoncurrentVersionExpiration") or {}).get("NoncurrentDays")
+            abort   = (rule.get("AbortIncompleteMultipartUpload") or {}).get("DaysAfterInitiation")
+            is_on   = (status == "Enabled")
+
+            with ui.card().style(
+                f"background:{bg}; border:1px solid {bdr}; "
+                "border-radius:8px; padding:10px 14px; width:100%;"
+            ):
+                with ui.row().style(
+                    "align-items:center; justify-content:space-between; "
+                    "width:100%; margin-bottom:6px;"
+                ):
+                    with ui.row().style("align-items:center; gap:8px;"):
+                        ui.icon("schedule").style("color:#58a6ff; font-size:1.1rem;")
+                        ui.label(rule_id).style(
+                            f"color:{txt}; font-size:0.85rem; font-weight:600;"
+                        )
+                        ui.badge(status).props("outline").style(
+                            f"color:{'#3fb950' if is_on else mut}; "
+                            f"border-color:{'#3fb950' if is_on else mut}; "
+                            "font-size:0.7rem; border-radius:4px; padding:2px 6px;"
+                        )
+                    ui.button(
+                        icon="delete",
+                        on_click=lambda _id=rule_id: _delete_lifecycle_rule(
+                            s3, ctx, _id, dark
+                        ),
+                    ).props("flat round dense").style("color:#da3633; flex-shrink:0;")
+                with ui.column().style("gap:2px; padding-left:4px;"):
+                    if prefix:
+                        _lc_row(f"📂  Prefix: {prefix!r}", mut)
+                    else:
+                        _lc_row("📂  Applies to all objects", mut)
+                    if exp:
+                        _lc_row(f"🗑  Delete objects after {exp} day(s)", txt)
+                    if noncur:
+                        _lc_row(f"🗑  Delete old versions after {noncur} day(s)", txt)
+                    if abort:
+                        _lc_row(f"⏹  Abort incomplete uploads after {abort} day(s)", txt)
+
+
+def _lc_row(text: str, color: str) -> None:
+    ui.label(text).style(
+        f"color:{color}; font-size:0.78rem; font-family:monospace;"
+    )
+
+
+async def _add_lifecycle_rule(s3, ctx: dict, dark: bool) -> None:
+    """Validate the form, build a lifecycle rule and save it to the bucket."""
+    import uuid as _uuid
+    rule_id     = (ctx["lc_id"].value or "").strip()
+    prefix      = (ctx["lc_prefix"].value or "").strip()
+    exp_days    = int(ctx["lc_exp_days"].value    or 0)
+    noncur_days = int(ctx["lc_noncur_days"].value or 0)
+    abort_days  = int(ctx["lc_abort_days"].value  or 0)
+    enabled     = bool(ctx["lc_enabled"].value)
+
+    if not (exp_days or noncur_days or abort_days):
+        ctx["lc_err"].set_text(
+            "Set at least one expiration condition (days > 0)."
+        )
+        return
+
+    if not rule_id:
+        rule_id = f"rule-{_uuid.uuid4().hex[:8]}"
+
+    rule: dict = {
+        "ID":     rule_id,
+        "Status": "Enabled" if enabled else "Disabled",
+        "Filter": {"Prefix": prefix},
+    }
+    if exp_days > 0:
+        rule["Expiration"] = {"Days": exp_days}
+    if noncur_days > 0:
+        rule["NoncurrentVersionExpiration"] = {"NoncurrentDays": noncur_days}
+    if abort_days > 0:
+        rule["AbortIncompleteMultipartUpload"] = {"DaysAfterInitiation": abort_days}
+
+    # Replace rule with same ID if it already exists; otherwise append
+    rules = [r for r in ctx.get("_lc_rules", []) if r.get("ID") != rule_id]
+    rules.append(rule)
+
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(
+            None, lambda: s3.put_bucket_lifecycle(ctx["bucket"], rules)
+        )
+        ctx["_lc_rules"] = rules
+        ctx["lc_err"].set_text("")
+        # Reset form fields
+        ctx["lc_id"].set_value("")
+        ctx["lc_prefix"].set_value("")
+        ctx["lc_exp_days"].set_value(0)
+        ctx["lc_noncur_days"].set_value(0)
+        ctx["lc_abort_days"].set_value(0)
+        ctx["lc_enabled"].set_value(True)
+        _render_lifecycle_rules(ctx["lc_col"], rules, ctx, s3, dark)
+        ui.notify(f"Lifecycle rule '{rule_id}' saved.", type="positive")
+    except Exception as exc:
+        ctx["lc_err"].set_text(str(exc))
+
+
+async def _delete_lifecycle_rule(s3, ctx: dict, rule_id: str, dark: bool) -> None:
+    """Delete one lifecycle rule by ID and persist the remaining rules."""
+    rules = [r for r in ctx.get("_lc_rules", []) if r.get("ID") != rule_id]
+    loop  = asyncio.get_event_loop()
+    try:
+        if rules:
+            await loop.run_in_executor(
+                None, lambda: s3.put_bucket_lifecycle(ctx["bucket"], rules)
+            )
+        else:
+            await loop.run_in_executor(
+                None, lambda: s3.delete_bucket_lifecycle(ctx["bucket"])
+            )
+        ctx["_lc_rules"] = rules
+        if "lc_err" in ctx:
+            ctx["lc_err"].set_text("")
+        _render_lifecycle_rules(ctx["lc_col"], rules, ctx, s3, dark)
+        ui.notify(f"Lifecycle rule '{rule_id}' deleted.", type="warning")
+    except Exception as exc:
+        if "lc_err" in ctx:
+            ctx["lc_err"].set_text(str(exc))
+
+
+async def _delete_all_lifecycle(s3, ctx: dict, dark: bool) -> None:
+    """Remove all lifecycle rules from the bucket."""
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(
+            None, lambda: s3.delete_bucket_lifecycle(ctx["bucket"])
+        )
+        ctx["_lc_rules"] = []
+        if "lc_err" in ctx:
+            ctx["lc_err"].set_text("")
+        _render_lifecycle_rules(ctx["lc_col"], [], ctx, s3, dark)
+        ui.notify("All lifecycle rules deleted.", type="warning")
+    except Exception as exc:
+        if "lc_err" in ctx:
+            ctx["lc_err"].set_text(str(exc))
 
 
 def _open_create(dlg, f_name, f_region, err, conn: dict) -> None:

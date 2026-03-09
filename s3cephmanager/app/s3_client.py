@@ -404,6 +404,34 @@ class S3Manager:
             VersioningConfiguration={"Status": status},
         )
 
+    # ── Lifecycle ──────────────────────────────────────────────────────────────
+
+    def get_bucket_lifecycle(self, bucket: str) -> list[dict]:
+        """Return lifecycle rules, or [] if none configured."""
+        try:
+            r = self.client.get_bucket_lifecycle_configuration(Bucket=bucket)
+            return r.get("Rules", [])
+        except ClientError as e:
+            code = e.response["Error"]["Code"]
+            if code in (
+                "NoSuchLifecycleConfiguration",
+                "NoSuchBucketLifecycle",
+                "LifecycleConfigurationNotFound",
+            ):
+                return []
+            raise
+
+    def put_bucket_lifecycle(self, bucket: str, rules: list[dict]) -> None:
+        """Replace all lifecycle rules on the bucket."""
+        self.client.put_bucket_lifecycle_configuration(
+            Bucket=bucket,
+            LifecycleConfiguration={"Rules": rules},
+        )
+
+    def delete_bucket_lifecycle(self, bucket: str) -> None:
+        """Remove all lifecycle rules from the bucket."""
+        self.client.delete_bucket_lifecycle(Bucket=bucket)
+
     def get_object_size(self, bucket: str, key: str) -> int:
         try:
             return self.client.head_object(Bucket=bucket, Key=key)["ContentLength"]
