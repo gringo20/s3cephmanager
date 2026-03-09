@@ -234,6 +234,8 @@ async def objects_page() -> None:
             table.add_slot("body-cell-acts", r"""
                 <q-td :props="props" style="text-align:right; white-space:nowrap; padding-right:8px;">
                   <template v-if="props.row.type === 'file'">
+                    <q-btn flat dense round icon="visibility" color="green-4" size="xs"
+                           @click="$parent.$emit('preview', props.row)"><q-tooltip>Preview</q-tooltip></q-btn>
                     <q-btn flat dense round icon="download" color="blue-4"   size="xs"
                            @click="$parent.$emit('dl',      props.row)"><q-tooltip>Download</q-tooltip></q-btn>
                     <q-btn flat dense round icon="content_copy" color="teal-4" size="xs"
@@ -284,6 +286,8 @@ async def objects_page() -> None:
             table.on("del_one",
                      lambda e: _delete_one(s3, bucket, e.args, modal,
                                            table, tree_list, brow, state, dark))
+            table.on("preview",
+                     lambda e: _pre_preview(e.args))
             table.on("selection",
                      lambda e: state.update(
                          {"selected": [r["key"] for r in e.args.get("rows", [])
@@ -500,6 +504,33 @@ async def objects_page() -> None:
                 ).on("click", lambda: _clipboard_copy(presign_url.text))
             _cancel_btn(presign_dlg, dark)
 
+    # ── 8. Preview ─────────────────────────────────────────────────────────────
+    preview_ctx: dict = {"key": ""}   # mutable cell shared with _pre_preview
+
+    with ui.dialog() as preview_dlg, _dlg_card(dark, width="900px"):
+        with ui.row().style(
+            "align-items:center; width:100%; gap:10px; margin-bottom:12px;"
+        ):
+            ui.icon("visibility").style(f"color:{C['blue']}; font-size:1.2rem;")
+            preview_title_lbl = ui.label("Preview").style(
+                f"color:{C['txt']}; font-size:1rem; font-weight:700; flex:1;"
+            )
+            ui.button(icon="close", on_click=preview_dlg.close).props(
+                "flat round dense"
+            ).style(f"color:{C['mut']};")
+
+        preview_content_col = ui.column().style("width:100%; gap:4px; min-height:120px;")
+
+        with ui.row().style(
+            "justify-content:space-between; align-items:center; margin-top:14px;"
+        ):
+            ui.button("Download", icon="download").props("no-caps").style(
+                "background:#1f6feb; color:#fff; border-radius:8px; font-weight:600;"
+            ).on("click", lambda: _download_one(s3, bucket, preview_ctx["key"]))
+            ui.button("Close", on_click=preview_dlg.close).props("flat no-caps").style(
+                f"color:{C['mut']};"
+            )
+
     # ═══════════════════════════════════════════════════════════════════════════
     #  Helper closures that need dialog references
     # ═══════════════════════════════════════════════════════════════════════════
@@ -544,6 +575,19 @@ async def objects_page() -> None:
             err_lbl.set_text(f"Could not list buckets: {exc}")
         dlg.open()
 
+    def _pre_preview(row: dict) -> None:
+        """Open the preview dialog for the given file row."""
+        key = row.get("key", "")
+        if not key:
+            return
+        preview_ctx["key"] = key
+        preview_title_lbl.set_text(key.rsplit("/", 1)[-1] or key)
+        preview_content_col.clear()
+        preview_dlg.open()
+        asyncio.ensure_future(
+            _show_preview(s3, bucket, key, preview_content_col, dark)
+        )
+
     # ── Keyboard shortcuts ────────────────────────────────────────────────────
     def _on_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and not e.modifiers.ctrl and not e.modifiers.alt:
@@ -558,7 +602,8 @@ async def objects_page() -> None:
                 )
             elif key == "Escape":
                 for dlg in (upload_dlg, folder_upload_dlg, copy_dlg,
-                            rename_dlg, presign_dlg, folder_dlg, xbucket_dlg):
+                            rename_dlg, presign_dlg, folder_dlg, xbucket_dlg,
+                            preview_dlg):
                     dlg.close()
 
     ui.keyboard(on_key=_on_key, ignore=[])
@@ -1233,6 +1278,169 @@ def _clipboard_copy(text: str) -> None:
     safe = text.replace("`", "\\`")
     ui.run_javascript(f"navigator.clipboard.writeText(`{safe}`)")
     ui.notify("URL copied to clipboard!", type="positive")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  Preview
+# ═════════════════════════════════════════════════════════════════════════════
+
+_PREVIEW_IMAGE_EXTS = frozenset({
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".ico",
+})
+_PREVIEW_PDF_EXTS   = frozenset({".pdf"})
+_PREVIEW_VIDEO_EXTS = frozenset({".mp4", ".webm", ".ogv", ".mov"})
+_PREVIEW_AUDIO_EXTS = frozenset({".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a"})
+_PREVIEW_TEXT_EXTS  = frozenset({
+    ".txt", ".md", ".json", ".yaml", ".yml", ".xml", ".html", ".htm",
+    ".css", ".js", ".ts", ".jsx", ".tsx", ".py", ".sh", ".bash",
+    ".go", ".rs", ".java", ".c", ".cpp", ".h", ".hpp", ".rb", ".php",
+    ".env", ".toml", ".ini", ".cfg", ".conf", ".log", ".csv", ".sql",
+    ".tf", ".hcl", ".dockerfile", ".makefile", ".gitignore",
+})
+
+
+def _ext_to_lang(ext: str) -> str:
+    return {
+        ".py": "python",   ".js": "javascript", ".ts": "typescript",
+        ".jsx": "javascript", ".tsx": "typescript",
+        ".json": "json",   ".yaml": "yaml",     ".yml": "yaml",
+        ".xml": "xml",     ".html": "html",     ".htm": "html",
+        ".css": "css",     ".sh": "bash",       ".bash": "bash",
+        ".md": "markdown", ".sql": "sql",       ".go": "go",
+        ".rs": "rust",     ".java": "java",     ".c": "c",
+        ".cpp": "cpp",     ".h": "c",           ".rb": "ruby",
+        ".php": "php",     ".tf": "hcl",        ".toml": "toml",
+    }.get(ext, "text")
+
+
+async def _show_preview(
+    s3, bucket: str, key: str,
+    content_col, dark: bool,
+) -> None:
+    """Fetch and render file preview inside *content_col*."""
+    import html as _html_mod
+    import requests as _requests
+
+    filename = key.rsplit("/", 1)[-1] or key
+    ext = ("." + filename.rsplit(".", 1)[-1].lower()) if "." in filename else ""
+    C   = _pal(dark)
+    loop = asyncio.get_event_loop()
+
+    # Generate an *inline* presigned URL (no Content-Disposition: attachment)
+    try:
+        url = await loop.run_in_executor(
+            None, lambda: s3.presigned_url_inline(bucket, key, expiry=600)
+        )
+    except Exception as exc:
+        content_col.clear()
+        with content_col:
+            ui.label(f"⚠ Error generating preview URL: {exc}").style(
+                "color:#da3633; font-size:0.82rem;"
+            )
+        return
+
+    content_col.clear()
+    with content_col:
+
+        # ── Images ────────────────────────────────────────────────────────────
+        if ext in _PREVIEW_IMAGE_EXTS:
+            ui.html(
+                f'<div style="text-align:center; padding:8px 0;">'
+                f'<img src="{url}" style="max-width:100%; max-height:66vh; '
+                f'object-fit:contain; border-radius:8px; display:inline-block;">'
+                f'</div>'
+            )
+
+        # ── PDF ───────────────────────────────────────────────────────────────
+        elif ext in _PREVIEW_PDF_EXTS:
+            ui.html(
+                f'<iframe src="{url}" '
+                f'style="width:100%; height:68vh; border:none; '
+                f'border-radius:8px;"></iframe>'
+            )
+
+        # ── Video ─────────────────────────────────────────────────────────────
+        elif ext in _PREVIEW_VIDEO_EXTS:
+            ui.html(
+                f'<video controls '
+                f'style="width:100%; max-height:66vh; border-radius:8px; display:block;">'
+                f'<source src="{url}">'
+                f'Browser does not support this video format.'
+                f'</video>'
+            )
+
+        # ── Audio ─────────────────────────────────────────────────────────────
+        elif ext in _PREVIEW_AUDIO_EXTS:
+            ui.html(
+                f'<div style="padding:52px 0; text-align:center;">'
+                f'<audio controls style="width:88%;">'
+                f'<source src="{url}">'
+                f'Browser does not support this audio format.'
+                f'</audio></div>'
+            )
+
+        # ── Text / Code ───────────────────────────────────────────────────────
+        elif ext in _PREVIEW_TEXT_EXTS:
+            # Show spinner while fetching content server-side
+            status_col = ui.column().style(
+                "width:100%; align-items:center; padding:52px 0; gap:10px;"
+            )
+            with status_col:
+                ui.spinner("dots", size="xl").style(
+                    f"color:{'#58a6ff' if dark else '#0969da'};"
+                )
+                ui.label("Loading…").style(f"color:{C['mut']}; font-size:0.82rem;")
+
+            try:
+                resp = await loop.run_in_executor(
+                    None,
+                    lambda: _requests.get(url, timeout=20, verify=False),
+                )
+                resp.raise_for_status()
+                text = resp.text
+                truncated = len(text) > 300_000
+                if truncated:
+                    text = text[:300_000]
+                status_col.clear()
+                with status_col:
+                    if truncated:
+                        ui.label("⚠ Preview limited to first 300 KB").style(
+                            "color:#d29922; font-size:0.73rem; margin-bottom:2px;"
+                        )
+                    # Escape HTML entities for safe rendering
+                    safe = _html_mod.escape(text)
+                    bdr  = "#21262d" if dark else "#d0d7de"
+                    bg   = "#0d1117" if dark else "#f6f8fa"
+                    txt  = "#e6edf3" if dark else "#1f2328"
+                    ui.html(
+                        f'<pre style="white-space:pre-wrap; word-break:break-all; '
+                        f'font-family:\'JetBrains Mono\',monospace; font-size:0.76rem; '
+                        f'line-height:1.5; color:{txt}; background:{bg}; '
+                        f'border:1px solid {bdr}; border-radius:8px; '
+                        f'padding:14px 16px; margin:0; max-height:65vh; '
+                        f'overflow:auto;">{safe}</pre>'
+                    )
+            except Exception as exc:
+                status_col.clear()
+                with status_col:
+                    ui.label(f"⚠ Could not fetch preview: {exc}").style(
+                        "color:#da3633; font-size:0.82rem;"
+                    )
+
+        # ── Unsupported ───────────────────────────────────────────────────────
+        else:
+            with ui.column().style(
+                "width:100%; align-items:center; padding:52px 0; gap:12px;"
+            ):
+                ui.icon("insert_drive_file").style(
+                    f"font-size:3.5rem; color:{C['mut']};"
+                )
+                ui.label(
+                    f"Preview not available for '{ext or 'this file type'}'"
+                ).style(f"color:{C['mut']}; font-size:0.9rem;")
+                ui.label("Use the Download button to open this file.").style(
+                    f"color:{C['mut']}; font-size:0.78rem;"
+                )
 
 
 # ═════════════════════════════════════════════════════════════════════════════
