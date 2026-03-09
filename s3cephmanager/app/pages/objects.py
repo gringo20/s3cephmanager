@@ -134,6 +134,9 @@ async def objects_page() -> None:
     # ── ProgressModal (created once, shared by all operations) ────────────────
     modal = ProgressModal(dark)
 
+    # Mutable state for folder-tree toggle (captured by closures below)
+    _ui_state: dict = {"tree_open": True}
+
     # ── Outer wrapper (fills viewport below header) ───────────────────────────
     with ui.row().style(
         f"width:100%; height:calc(100vh - 56px); gap:0; padding:0; "
@@ -172,6 +175,16 @@ async def objects_page() -> None:
                         icon="arrow_back",
                         on_click=lambda: ui.navigate.to("/buckets"),
                     ).props("flat round").style(f"color:{C['mut']};")
+                    # ── Folder-tree toggle ─────────────────────────────────
+                    # Clicking shows/hides the 240 px left panel, giving the
+                    # table more horizontal space on smaller screens.
+                    # _toggle_tree_panel() is defined below (helper closures).
+                    tree_toggle = ui.button(
+                        icon="menu_open",
+                        on_click=lambda: _toggle_tree_panel(),
+                    ).props("flat round").style(f"color:{C['mut']};")
+                    ui.tooltip("Toggle folder tree")
+                    # ───────────────────────────────────────────────────────
                     ui.icon("dns").style(
                         f"color:{C['blue']}; font-size:1.15rem;"
                     )
@@ -600,6 +613,15 @@ async def objects_page() -> None:
     # ═══════════════════════════════════════════════════════════════════════════
     #  Helper closures that need dialog references
     # ═══════════════════════════════════════════════════════════════════════════
+
+    def _toggle_tree_panel() -> None:
+        """Show / hide the left folder-tree panel to reclaim horizontal space."""
+        _ui_state["tree_open"] = not _ui_state["tree_open"]
+        is_open = _ui_state["tree_open"]
+        left_panel.set_visibility(is_open)
+        # Swap the button icon so it reflects current state
+        tree_toggle._props["icon"] = "menu_open" if is_open else "menu"
+        tree_toggle.update()
 
     def _open_copy_dlg(dlg, dst_inp, err, st, palette,
                        single_key: str = "") -> None:
