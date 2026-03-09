@@ -1,145 +1,93 @@
-Înțeleg — CRD-ul a fost aplicat dar Rook nu a creat încă userul în Ceph. Să verificăm de ce și avem un fallback rapid:
+Acum totul e clar! CRD-ul a funcționat — Rook a creat userul cu succes (`Phase: Ready`, Secret creat). Dar `radosgw-admin user list` nu îl vede pentru că **userul e creat în zona/realm-ul internal al objectstore-ului**, nu în zona default pe care o vede tools pod-ul.
 
-## Pasul 1 — Verifică statusul CRD-ului
-
-```bash
-kubectl get cephobjectstoreuser -n rook-ceph
-kubectl describe cephobjectstoreuser -n rook-ceph s3admin 2>/dev/null || echo "CRD nu exista inca"
-```
-
-## Pasul 2 — Verifică log-urile operatorului Rook
+## Pasul 1 — Citește credențialele din Secret (create de Rook)
 
 ```bash
-kubectl logs -n rook-ceph deploy/rook-ceph-operator --tail=50 \
-  | grep -iE "s3admin|objectstoreuser|user|error" | tail -20
+kubectl get secret -n rook-ceph \
+  rook-ceph-object-user-ceph-objectstore-s3admin \
+  -o go-template='
+AccessKey: {{.data.AccessKey | base64decode}}
+SecretKey: {{.data.SecretKey | base64decode}}
+'
 ```
 
----
+## Pasul 2 — Testează că credențialele funcționează cu RGW-ul activ
 
-## Dacă CRD-ul nu funcționează — creează userul direct via radosgw-admin
+Rulează din podul aplicației:
 
-Acesta este fallback-ul cel mai simplu și funcționează identic. CRD-ul e doar o metodă convenabilă — userul creat manual funcționează la fel:
+```bash
+kubectl exec -n s3manager -it deploy/cephs3manager -- python3 -c "
+import requests
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
+
+# ← pune credențialele din Secret
+ACCESS_KEY = 'PUNE_ACCES_KEY_DIN_SECRET'
+SECRET_KEY = 'PUNE_SECRET_KEY_DIN_SECRET'
+ENDPOINT   = 'http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc'
+
+print('--- Test S3 (list buckets) ---')
+import boto3
+from botocore.config import Config
+client = boto3.client('s3', endpoint_url=ENDPOINT,
+    aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY,
+    region_name='us-east-1', verify=False,
+    config=Config(signature_version='s3v4', s3={'addressing_style':'path'}))
+try:
+    r = client.list_buckets()
+    print('S3 OK - buckets:', [b['Name'] for b in r['Buckets']])
+except Exception as e:
+    print('S3 FAIL:', e)
+
+print()
+print('--- Test Admin API (list users) ---')
+url = f'{ENDPOINT}/admin/metadata/user'
+creds = Credentials(ACCESS_KEY, SECRET_KEY)
+req = AWSRequest(method='GET', url=url, data=b'')
+SigV4Auth(creds, 's3', 'us-east-1').add_auth(req)
+resp = requests.get(url, headers=dict(req.headers))
+print('Status:', resp.status_code)
+print('Body:  ', resp.text[:300])
+"
+```
+
+## Pasul 3 — În funcție de rezultat
+
+### ✅ Dacă Admin API returnează 200 — totul e rezolvat!
+Actualizează connection settings în aplicație cu credențialele din Secret.
+
+### ⚠️ Dacă Admin API returnează 403 — caps lipsă, adaugă via Admin API direct
+
+Rook a creat userul dar s-ar putea că nu a setat toate caps-urile. Adaugă-le folosind chiar credențialele din Secret (auto-referință):
 
 ```bash
 kubectl exec -n rook-ceph -it \
-  $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
+  $(kubectl get pod -n rook-ceph -l app=rook-ceph-rgw -o jsonpath='{.items[0].metadata.name}') \
   -- bash -c '
-# Creează userul cu toate capabilitățile dintr-o singură comandă
-radosgw-admin user create \
+# Rulat DIRECT din podul RGW — care cunoaște zona corectă
+ACCESS_KEY="PUNE_ACCES_KEY_DIN_SECRET"
+
+# Găsește uid-ul după access key
+radosgw-admin user info --access-key="'$ACCESS_KEY'" 2>/dev/null \
+  || radosgw-admin user list
+
+# Adaugă caps
+radosgw-admin caps add \
   --uid=s3admin \
-  --display-name="S3 Admin" \
   --caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
 
-echo ""
-echo "=== CREDENTIALE ==="
 radosgw-admin user info --uid=s3admin | python3 -c "
 import json, sys
 u = json.load(sys.stdin)
-k = u[\"keys\"][0]
-print(\"AccessKey:\", k[\"access_key\"])
-print(\"SecretKey:\", k[\"secret_key\"])
-print()
-print(\"Caps:\")
-for c in u[\"caps\"]:
-    print(f\"  {c[\"type\"]:12} = {c[\"perm\"]}\")
+print(\"Access:\", u[\"keys\"][0][\"access_key\"])
+print(\"Caps:  \", [(c[\"type\"],c[\"perm\"]) for c in u[\"caps\"]])
 "
 '
 ```
 
-Dacă preferi să setezi tu credențialele (nu generate random):
-
-```bash
-kubectl exec -n rook-ceph -it \
-  $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
-  -- radosgw-admin user create \
-     --uid=s3admin \
-     --display-name="S3 Admin" \
-     --access-key="s3AdminAccessKey2026" \
-     --secret-key="s3AdminSecretKey2026SuperSecret" \
-     --caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
-```
+**Diferența față de înainte**: acum rulezi `radosgw-admin` din **podul RGW** (nu tools), care e în același context de zonă cu userul creat de CRD.
 
 ---
 
-## Testează imediat după creare
-
-```bash
-kubectl exec -n rook-ceph -it \
-  $(kubectl get pod -n rook-ceph -l app=rook-ceph-tools -o jsonpath='{.items[0].metadata.name}') \
-  -- python3 -c "
-import subprocess, json
-out = subprocess.check_output(['radosgw-admin', 'user', 'info', '--uid=s3admin'])
-u = json.loads(out)
-k = u['keys'][0]
-print('AccessKey:', k['access_key'])
-print('SecretKey:', k['secret_key'])
-print('Caps OK:', len(u['caps']) >= 4)
-"
-```
-
----
-
-Trimite output-ul de la `kubectl describe cephobjectstoreuser -n rook-ceph s3admin` și/sau log-urile operatorului — să vedem exact de ce CRD-ul nu creează userul. Între timp, crearea manuală via radosgw-admin va rezolva problema imediat.
-
-[e.cauca@DevOps-admins ~]$ kubectl describe cephobjectstoreuser -n rook-ceph s3admin 2>/dev/null || echo "CRD nu exista inca"
-Name:         s3admin
-Namespace:    rook-ceph
-Labels:       <none>
-Annotations:  <none>
-API Version:  ceph.rook.io/v1
-Kind:         CephObjectStoreUser
-Metadata:
-  Creation Timestamp:  2026-03-09T09:30:36Z
-  Finalizers:
-    cephobjectstoreuser.ceph.rook.io
-  Generation:        1
-  Resource Version:  486265511
-  UID:               ee3c4db3-d664-471a-8afe-3749886661c3
-Spec:
-  Capabilities:
-    Bucket:      *
-    Metadata:    *
-    Usage:       *
-    User:        *
-    Zone:        *
-  Display Name:  S3 Admin
-  Store:         ceph-objectstore
-Status:
-  Info:
-    Secret Name:        rook-ceph-object-user-ceph-objectstore-s3admin
-  Observed Generation:  1
-  Phase:                Ready
-Events:
-  Type    Reason              Age   From                                    Message
-  ----    ------              ----  ----                                    -------
-  Normal  ReconcileSucceeded  14m   rook-ceph-object-store-user-controller  successfully configured CephObjectStoreUser "rook-ceph/s3admin"
-[e.cauca@DevOps-admins ~]$ kubectl logs -n rook-ceph deploy/rook-ceph-operator --tail=50 \
-  | grep -iE "s3admin|objectstoreuser|user|error" | tail -20
-2026-03-09 09:25:06.648515 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000794d4a9d1d87eeb2-0069ae91f2-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:07.171908 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx000002d5e44585a39bcea-0069ae91f3-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:07.171940 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx000002d5e44585a39bcea-0069ae91f3-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:07.686936 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000703a235ab0e74304-0069ae91f3-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:07.686964 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000703a235ab0e74304-0069ae91f3-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:08.370210 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000c2b57182a18bef6e-0069ae91f4-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:08.370299 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000c2b57182a18bef6e-0069ae91f4-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:09.400270 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000f06494c37536d3ba-0069ae91f5-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:09.400309 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx00000f06494c37536d3ba-0069ae91f5-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:11.067575 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx0000041d0af2dcff835c1-0069ae91f7-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:11.067606 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx0000041d0af2dcff835c1-0069ae91f7-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:14.000131 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx0000015aa555d6cebdd66-0069ae91f9-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:14.000159 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx0000015aa555d6cebdd66-0069ae91f9-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:19.503563 E | ceph-object-store-user-controller: failed to reconcile failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx0000054fa5464298ceeaa-0069ae91ff-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:19.503588 E | ceph-object-store-user-controller: failed to reconcile CephObjectStoreUser "rook-ceph/s3admin". failed to delete ceph object user "s3admin": failed to delete ceph object user "s3admin".: BucketAlreadyExists tx0000054fa5464298ceeaa-0069ae91ff-11604713-ceph-objectstore 11604713-ceph-objectstore-ceph-objectstore
-2026-03-09 09:25:21.540076 I | ceph-spec: object "rook-ceph-object-user-ceph-objectstore-s3admin" matched on delete, reconciling
-2026-03-09 09:30:36.664727 I | ceph-spec: adding finalizer "cephobjectstoreuser.ceph.rook.io" on "s3admin"
-2026-03-09 09:30:37.039018 I | ceph-object-store-user-controller: creating ceph object user "s3admin" in namespace "rook-ceph"
-2026-03-09 09:30:37.196927 I | ceph-object-store-user-controller: updated ceph object user "s3admin"
-2026-03-09 09:30:37.206415 I | ceph-spec: created ceph *v1.Secret object "rook-ceph-object-user-ceph-objectstore-s3admin"
-[e.cauca@DevOps-admins ~]$
-
-
-bash-5.1$ radosgw-admin user list
-[
-    "testuser"
-]
-bash-5.1$
+Trimite output-ul testului Python — vom ști exact în ce situație suntem.
