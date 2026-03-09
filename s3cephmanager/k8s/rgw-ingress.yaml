@@ -1,0 +1,40 @@
+# Ingress pentru Ceph RGW — expune S3 API extern din browser
+# Ajustează host-ul la domeniul tău real (sau IP dacă folosești nip.io)
+#
+# Aplică cu:
+#   kubectl apply -f k8s/rgw-ingress.yaml
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ceph-rgw-external
+  namespace: rook-ceph
+  annotations:
+    # Dacă folosești nginx ingress controller:
+    kubernetes.io/ingress.class: "nginx"
+    # Permite fișiere mari (upload S3 multipart)
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    # Dacă ai cert-manager pentru TLS automat, decomentează:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # ingressClassName: nginx    # alternativ la annotation de mai sus
+  rules:
+    # ⚠️  SCHIMBĂ host-ul la domeniul tău real!
+    # Exemplu: s3.company.internal, ceph-s3.uat.mcb.md etc.
+    - host: s3-rgw.uat.mcb.md
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rook-ceph-rgw-ceph-objectstore
+                port:
+                  number: 80
+  # TLS opțional — decomentează și ajustează dacă ai cert-manager:
+  # tls:
+  #   - hosts:
+  #       - s3-rgw.uat.mcb.md
+  #     secretName: ceph-rgw-tls

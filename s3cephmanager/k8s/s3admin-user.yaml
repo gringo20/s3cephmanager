@@ -1,0 +1,40 @@
+# CephObjectStoreUser — utilizator S3 admin cu control complet
+#
+# Acest utilizator va fi folosit de CephS3Manager pentru:
+#   - gestionarea altor utilizatori S3 (creare, ștergere, modificare)
+#   - gestionarea bucket-urilor
+#   - citirea statisticilor de utilizare
+#   - operații administrative
+#
+# Credențialele generate automat de Rook vor fi disponibile în Secret-ul:
+#   rook-ceph-object-user-ceph-objectstore-s3admin (namespace: rook-ceph)
+#
+# Aplicare:
+#   kubectl apply -f k8s/s3admin-user.yaml
+#
+# Citire credențiale după aplicare (~30s):
+#   kubectl get secret -n rook-ceph rook-ceph-object-user-ceph-objectstore-s3admin \
+#     -o go-template='AccessKey: {{.data.AccessKey|base64decode}}{{"\n"}}SecretKey: {{.data.SecretKey|base64decode}}{{"\n"}}'
+#
+apiVersion: ceph.rook.io/v1
+kind: CephObjectStoreUser
+metadata:
+  name: s3admin
+  namespace: rook-ceph
+spec:
+  store: ceph-objectstore
+  displayName: "S3 Admin"
+  # Capabilități admin complete — permite gestionarea utilizatorilor și bucket-urilor
+  # Documentație Rook: https://rook.io/docs/rook/latest-release/CRDs/Object-Storage/ceph-object-store-user-crd/
+  # Documentație Ceph: https://docs.ceph.com/en/latest/radosgw/admin/#add-remove-admin-capabilities
+  capabilities:
+    # user / users → permite creare, modificare, ștergere utilizatori
+    user: "*"
+    # bucket / buckets → permite creare, ștergere, modificare bucket-uri
+    bucket: "*"
+    # metadata → permite listarea și citirea metadatelor (necesar pentru list_users)
+    metadata: "*"
+    # usage → permite citirea statisticilor de utilizare
+    usage: "*"
+    # zone → permite citirea informațiilor despre zonă
+    zone: "*"
