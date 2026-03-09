@@ -192,9 +192,16 @@ class S3Manager:
         )
 
     def presigned_url(self, bucket: str, key: str, expiry: int = 3600) -> str:
+        # Extract bare filename for Content-Disposition so the browser
+        # always downloads the file instead of displaying it inline.
+        filename = key.rsplit("/", 1)[-1] or key
         return self._presign_client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": bucket, "Key": key},
+            Params={
+                "Bucket": bucket,
+                "Key":    key,
+                "ResponseContentDisposition": f'attachment; filename="{filename}"',
+            },
             ExpiresIn=expiry,
         )
 
