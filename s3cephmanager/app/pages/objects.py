@@ -312,7 +312,7 @@ async def objects_page() -> None:
         # content exceeds the flex-container height (calc(100vh - 56px)).
         with ui.column().style(
             "flex:1; min-width:0; min-height:0; padding:18px 22px; gap:12px; "
-            "overflow:hidden;"
+            "overflow-y:auto;"
         ):
 
             # Top bar
@@ -465,9 +465,8 @@ async def objects_page() -> None:
                     "pagination": True,
                     "paginationPageSize": 50,
                     ":paginationPageSizeSelector": "[25, 50, 100, 250]",
-                    # 'normal' = fixed height; grid owns the scrollbar
-                    # This is required for virtual scrolling to work correctly.
-                    "domLayout": "normal",
+                    # autoHeight: grid expands to fit rows; wrapper provides scroll
+                    "domLayout": "autoHeight",
                     "animateRows": False,
                     "suppressMovableColumns": True,
                     "suppressCellFocus": True,
@@ -476,14 +475,9 @@ async def objects_page() -> None:
                         f'<span style="color:{C["mut"]};font-size:0.9rem">'
                         "Empty folder</span>"
                     ),
-                    # For future infinite-row-model pagination uncomment:
-                    # 'rowModelType': 'infinite',
-                    # 'cacheBlockSize': 100,
-                    # 'maxBlocksInCache': 5,
                 },
             ).style(
-                # h-[60vh] equivalent — fixed height enables virtual scrolling
-                f"width:100%; height:calc(100vh - 310px); min-height:300px; "
+                f"width:100%; min-height:120px; "
                 f"border:1px solid {C['bdr']}; border-radius:10px; "
                 f"overflow:hidden; {_ag_css}"
             )
@@ -544,6 +538,11 @@ async def objects_page() -> None:
                     spin.set_visibility(False)
                     ui.notify(f"Error fetching objects: {exc}", type="negative")
                     return
+
+                # DEBUG – remove once grid renders correctly
+                print(f"[DEBUG] fetch_objects → {len(rows)} rows, "
+                      f"first keys: {[r['key'] for r in rows[:3]]}")
+                ui.notify(f"Loaded {len(rows)} items", type="positive", timeout=2000)
 
                 # Prepend ".." navigation row when inside a sub-prefix
                 all_rows: list[dict] = []
