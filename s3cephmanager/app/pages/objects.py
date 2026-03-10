@@ -280,6 +280,37 @@ async def objects_page() -> None:
     # Palette
     C = _pal(dark)
 
+    # ── AG Grid theme: inject direct CSS overrides (CSS custom properties are
+    #    NOT reliably supported in the bundled ag-theme-balham version) ─────────
+    if dark:
+        ui.add_head_html("""<style>
+.ag-theme-balham .ag-root-wrapper        { background:#0d1117; border-color:#21262d; }
+.ag-theme-balham .ag-header              { background-color:#161b22 !important; border-color:#21262d !important; }
+.ag-theme-balham .ag-header-cell         { color:#e6edf3 !important; border-color:#21262d !important; }
+.ag-theme-balham .ag-header-cell-label   { color:#e6edf3 !important; }
+.ag-theme-balham .ag-row                 { background-color:#0d1117 !important; border-color:#21262d !important; }
+.ag-theme-balham .ag-row-odd             { background-color:#0d1117 !important; }
+.ag-theme-balham .ag-row-even            { background-color:#0d1117 !important; }
+.ag-theme-balham .ag-row:hover,
+.ag-theme-balham .ag-row-hover           { background-color:#1f6feb22 !important; }
+.ag-theme-balham .ag-row-selected        { background-color:#1f6feb33 !important; }
+.ag-theme-balham .ag-cell                { color:#e6edf3 !important; border-color:transparent !important; }
+.ag-theme-balham .ag-body-viewport       { background-color:#0d1117; }
+.ag-theme-balham .ag-center-cols-clipper { background-color:#0d1117; }
+.ag-theme-balham .ag-paging-panel        { background-color:#161b22 !important; color:#8b949e !important; border-color:#21262d !important; }
+.ag-theme-balham .ag-paging-button       { color:#e6edf3 !important; }
+.ag-theme-balham .ag-icon                { color:#8b949e !important; }
+.ag-theme-balham .ag-checkbox-input-wrapper::after { color:#1f6feb; }
+.ag-theme-balham .ag-overlay-no-rows-center { color:#8b949e; }
+</style>""")
+    else:
+        ui.add_head_html("""<style>
+.ag-theme-balham .ag-row:hover,
+.ag-theme-balham .ag-row-hover  { background-color:#0969da18 !important; }
+.ag-theme-balham .ag-row-selected { background-color:#0969da22 !important; }
+</style>""")
+
+
     # ── ProgressModal (created once, shared by all operations) ────────────────
     modal = ProgressModal(dark)
 
@@ -436,24 +467,6 @@ async def objects_page() -> None:
                 )
                 bulk_del_btn.set_enabled(False)
 
-            # AG Grid theme via CSS custom properties
-            _ag_css = (
-                f"--ag-background-color:{C['tbg']};"
-                f"--ag-header-background-color:{C['sbg']};"
-                f"--ag-odd-row-background-color:{C['tbg']};"
-                f"--ag-row-hover-color:{C['act_bg']};"
-                f"--ag-selected-row-background-color:{C['act_bg']};"
-                f"--ag-border-color:{C['bdr']};"
-                f"--ag-row-border-color:{C['bdr']};"
-                f"--ag-foreground-color:{C['txt']};"
-                f"--ag-header-foreground-color:{C['txt']};"
-                f"--ag-secondary-foreground-color:{C['mut']};"
-                f"--ag-checkbox-checked-color:{C['active']};"
-                f"--ag-checkbox-unchecked-color:{C['mut']};"
-                f"--ag-input-focus-border-color:{C['active']};"
-                f"--ag-pagination-background-color:{C['sbg']};"
-            )
-
             grid = ui.aggrid(
                 options={
                     "columnDefs": _GRID_COLDEFS,
@@ -476,9 +489,8 @@ async def objects_page() -> None:
                     ),
                 },
             ).style(
-                f"width:100%; flex:1; min-height:200px; "
-                f"border:1px solid {C['bdr']}; border-radius:10px; "
-                f"overflow:hidden; {_ag_css}"
+                f"width:100%; height:calc(100vh - 310px); min-height:200px; "
+                f"border:1px solid {C['bdr']}; border-radius:10px; overflow:hidden;"
             )
 
             # ── Shared confirm dialog (reused for delete / overwrite prompts) ──
