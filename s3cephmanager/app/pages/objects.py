@@ -458,7 +458,6 @@ async def objects_page() -> None:
                 options={
                     "columnDefs": _GRID_COLDEFS,
                     "rowData": [],
-                    ":getRowId": "(p) => p.data.key",
                     "rowSelection": "multiple",
                     "suppressRowClickSelection": True,
                     # Pagination – AG Grid handles client-side paging
@@ -563,8 +562,9 @@ async def objects_page() -> None:
                 all_rows.extend(rows)
                 state["all_rows"] = all_rows
 
-                # Push data via AG Grid API (non-destructive to grid state)
-                grid.run_grid_method("setGridOption", "rowData", all_rows)
+                # NiceGUI-native update (reliable across all AG Grid versions)
+                grid.options["rowData"] = all_rows
+                grid.update()
 
                 n_files = sum(1 for r in all_rows if r["type"] == "file")
                 n_folders = sum(1 for r in all_rows if r["type"] == "folder")
@@ -1018,7 +1018,8 @@ async def _reload(
     all_rows.extend(rows)
 
     state["all_rows"] = all_rows
-    grid.run_grid_method("setGridOption", "rowData", all_rows)
+    grid.options["rowData"] = all_rows
+    grid.update()
 
     _render_breadcrumb(brow, bucket, state, grid, tree_list, s3, dark)
     await _render_tree(tree_list, s3, bucket, state, grid, brow, dark)
