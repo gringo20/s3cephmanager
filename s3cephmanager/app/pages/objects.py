@@ -350,13 +350,16 @@ async def objects_page() -> None:
                 with ui.row().style("gap:6px; align-items:center;"):
                     search = ui.input(
                         placeholder="Quick filter…",
-                        on_value_change=lambda e: grid.run_grid_method(
-                            "setGridOption", "quickFilterText", e.value or ""
-                        ),
                     ).props(
                         ("dense outlined clearable dark"
                          if dark else "dense outlined clearable")
                     ).style(_inp(dark) + "width:200px;")
+                    search.on(
+                        "update:model-value",
+                        lambda e: grid.run_grid_method(
+                            "setGridOption", "quickFilterText", e.args or ""
+                        ),
+                    )
                     ui.button(
                         icon="refresh",
                         on_click=lambda: asyncio.ensure_future(
