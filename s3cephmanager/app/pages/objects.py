@@ -206,18 +206,18 @@ _GRID_COLDEFS: list[dict] = [
 
 
 def fetch_objects(s3_client, bucket: str, prefix: str = "") -> list[dict]:
-    """
-    One-level listing via S3Manager.list_objects (wraps list_objects_v2
-    with delimiter='/').  Returns aggrid-ready row dicts (folders first,
-    then files).
-    Blocking – always call inside run_in_executor.
-
-    NOTE: S3Manager.list_objects caps at 1 000 keys per call.
-    For buckets with >1 000 objects under a prefix a paginator loop
-    using resp['next_token'] is needed.
-
-    Raises on error – do NOT call ui.notify here (runs in a thread).
-    """
+    """Blocking – call inside run_in_executor. Raises on error."""
+    # ── DEBUG (remove once working) ───────────────────────────────────────────
+    _ep  = getattr(s3_client.client, "_endpoint", None)
+    _url = getattr(_ep, "host", "?") if _ep else "?"
+    print(f"[fetch_objects] bucket={bucket!r} prefix={prefix!r} endpoint={_url}")
+    try:
+        s3_client.client.head_bucket(Bucket=bucket)
+        print(f"[fetch_objects] head_bucket OK")
+    except Exception as hb_exc:
+        print(f"[fetch_objects] head_bucket FAILED: {hb_exc}")
+        raise
+    # ─────────────────────────────────────────────────────────────────────────
     resp = s3_client.list_objects(bucket, prefix, "/")
     rows: list[dict] = []
 
