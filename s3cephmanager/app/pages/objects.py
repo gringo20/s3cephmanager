@@ -312,7 +312,7 @@ async def objects_page() -> None:
         # content exceeds the flex-container height (calc(100vh - 56px)).
         with ui.column().style(
             "flex:1; min-width:0; min-height:0; padding:18px 22px; gap:12px; "
-            "overflow-y:auto;"
+            "overflow:hidden;"
         ):
 
             # Top bar
@@ -464,8 +464,8 @@ async def objects_page() -> None:
                     "pagination": True,
                     "paginationPageSize": 50,
                     ":paginationPageSizeSelector": "[25, 50, 100, 250]",
-                    # autoHeight: grid expands to fit rows; wrapper provides scroll
-                    "domLayout": "autoHeight",
+                    "domLayout": "normal",
+                    "rowHeight": 35,
                     "animateRows": False,
                     "suppressMovableColumns": True,
                     "suppressCellFocus": True,
@@ -476,7 +476,7 @@ async def objects_page() -> None:
                     ),
                 },
             ).style(
-                f"width:100%; min-height:120px; "
+                f"width:100%; flex:1; min-height:200px; "
                 f"border:1px solid {C['bdr']}; border-radius:10px; "
                 f"overflow:hidden; {_ag_css}"
             )
