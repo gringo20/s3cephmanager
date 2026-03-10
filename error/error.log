@@ -1,3 +1,14 @@
+NiceGUI ready to go on http://localhost:8080, and http://10.42.7.142:8080
+2026-03-10T10:21:30 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
+2026-03-10T10:21:30 [INFO] cephs3mgr.main: Database initialised
+2026-03-10T10:21:42 [ERROR] nicegui: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
 
 The above exception was the direct cause of the following exception:
 
@@ -107,182 +118,42 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
     return await result
            ^^^^^^^^^^^^
-  File "/app/app/pages/objects.py", line 351, in objects_page
-    search = ui.input(
-             ~~~~~~~~^
-        placeholder="Quick filter…",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<2 lines>...
-        ),
-        ^^
-    ).props(
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
     ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    bound = signature.bind(*args, **kwargs)
-  File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    return self._bind(args, kwargs)
-           ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    raise TypeError(
-        'got an unexpected keyword argument {arg!r}'.format(
-            arg=next(iter(kwargs))))
-TypeError: got an unexpected keyword argument 'on_value_change'
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
 ERROR:    Exception in ASGI application
-  + Exception Group Traceback (most recent call last):
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 81, in collapse_excgroups
-  |     yield
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 192, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
-  |   File "/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
-  |     raise BaseExceptionGroup(
-  |         "unhandled errors in a TaskGroup", self._exceptions
-  |     ) from None
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "/usr/local/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
-    |     result = await app(  # type: ignore[func-returns-value]
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |         self.scope, self.receive, self.send
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
-    |     return await self.app(scope, receive, send)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
-    |     await self.app(scope, receive, send_wrapper)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
-    |     await responder(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
-    |     await self.app(scope, receive, self.send_with_compression)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    |     await route.handle(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
-    |     raw_response = await run_endpoint_function(
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<3 lines>...
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
-    |     return await dependant.call(**values)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
-    |     result = task.result()
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
-    |     return create_500_error_page(e, request)
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
-    |     raise e
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
-    |     return await result
-    |            ^^^^^^^^^^^^
-    |   File "/app/app/pages/objects.py", line 351, in objects_page
-    |     search = ui.input(
-    |              ~~~~~~~~^
-    |         placeholder="Quick filter…",
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<2 lines>...
-    |         ),
-    |         ^^
-    |     ).props(
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    |     bound = signature.bind(*args, **kwargs)
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    |     return self._bind(args, kwargs)
-    |            ~~~~~~~~~~^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    |     raise TypeError(
-    |         'got an unexpected keyword argument {arg!r}'.format(
-    |             arg=next(iter(kwargs))))
-    | TypeError: got an unexpected keyword argument 'on_value_change'
-    +------------------------------------
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
 
 The above exception was the direct cause of the following exception:
 
@@ -408,166 +279,44 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
     return await result
            ^^^^^^^^^^^^
-  File "/app/app/pages/objects.py", line 351, in objects_page
-    search = ui.input(
-             ~~~~~~~~^
-        placeholder="Quick filter…",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<2 lines>...
-        ),
-        ^^
-    ).props(
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
     ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    bound = signature.bind(*args, **kwargs)
-  File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    return self._bind(args, kwargs)
-           ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    raise TypeError(
-        'got an unexpected keyword argument {arg!r}'.format(
-            arg=next(iter(kwargs))))
-TypeError: got an unexpected keyword argument 'on_value_change'
-2026-03-10T10:15:15 [ERROR] nicegui: got an unexpected keyword argument 'on_value_change'
-  + Exception Group Traceback (most recent call last):
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 81, in collapse_excgroups
-  |     yield
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 192, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
-  |   File "/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
-  |     raise BaseExceptionGroup(
-  |         "unhandled errors in a TaskGroup", self._exceptions
-  |     ) from None
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
-    |     await self.app(scope, receive, send_wrapper)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
-    |     await responder(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
-    |     await self.app(scope, receive, self.send_with_compression)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    |     await route.handle(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
-    |     raw_response = await run_endpoint_function(
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<3 lines>...
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
-    |     return await dependant.call(**values)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
-    |     result = task.result()
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
-    |     return create_500_error_page(e, request)
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
-    |     raise e
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
-    |     return await result
-    |            ^^^^^^^^^^^^
-    |   File "/app/app/pages/objects.py", line 351, in objects_page
-    |     search = ui.input(
-    |              ~~~~~~~~^
-    |         placeholder="Quick filter…",
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<2 lines>...
-    |         ),
-    |         ^^
-    |     ).props(
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    |     bound = signature.bind(*args, **kwargs)
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    |     return self._bind(args, kwargs)
-    |            ~~~~~~~~~~^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    |     raise TypeError(
-    |         'got an unexpected keyword argument {arg!r}'.format(
-    |             arg=next(iter(kwargs))))
-    | TypeError: got an unexpected keyword argument 'on_value_change'
-    +------------------------------------
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+2026-03-10T10:21:48 [ERROR] nicegui: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
 
 The above exception was the direct cause of the following exception:
 
@@ -677,182 +426,42 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
     return await result
            ^^^^^^^^^^^^
-  File "/app/app/pages/objects.py", line 351, in objects_page
-    search = ui.input(
-             ~~~~~~~~^
-        placeholder="Quick filter…",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<2 lines>...
-        ),
-        ^^
-    ).props(
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
     ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    bound = signature.bind(*args, **kwargs)
-  File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    return self._bind(args, kwargs)
-           ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    raise TypeError(
-        'got an unexpected keyword argument {arg!r}'.format(
-            arg=next(iter(kwargs))))
-TypeError: got an unexpected keyword argument 'on_value_change'
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
 ERROR:    Exception in ASGI application
-  + Exception Group Traceback (most recent call last):
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 81, in collapse_excgroups
-  |     yield
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 192, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
-  |   File "/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
-  |     raise BaseExceptionGroup(
-  |         "unhandled errors in a TaskGroup", self._exceptions
-  |     ) from None
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "/usr/local/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
-    |     result = await app(  # type: ignore[func-returns-value]
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |         self.scope, self.receive, self.send
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
-    |     return await self.app(scope, receive, send)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
-    |     await self.app(scope, receive, send_wrapper)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
-    |     await responder(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
-    |     await self.app(scope, receive, self.send_with_compression)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    |     await route.handle(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
-    |     raw_response = await run_endpoint_function(
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<3 lines>...
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
-    |     return await dependant.call(**values)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
-    |     result = task.result()
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
-    |     return create_500_error_page(e, request)
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
-    |     raise e
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
-    |     return await result
-    |            ^^^^^^^^^^^^
-    |   File "/app/app/pages/objects.py", line 351, in objects_page
-    |     search = ui.input(
-    |              ~~~~~~~~^
-    |         placeholder="Quick filter…",
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<2 lines>...
-    |         ),
-    |         ^^
-    |     ).props(
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    |     bound = signature.bind(*args, **kwargs)
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    |     return self._bind(args, kwargs)
-    |            ~~~~~~~~~~^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    |     raise TypeError(
-    |         'got an unexpected keyword argument {arg!r}'.format(
-    |             arg=next(iter(kwargs))))
-    | TypeError: got an unexpected keyword argument 'on_value_change'
-    +------------------------------------
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
 
 The above exception was the direct cause of the following exception:
 
@@ -978,166 +587,44 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
     return await result
            ^^^^^^^^^^^^
-  File "/app/app/pages/objects.py", line 351, in objects_page
-    search = ui.input(
-             ~~~~~~~~^
-        placeholder="Quick filter…",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<2 lines>...
-        ),
-        ^^
-    ).props(
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
     ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    bound = signature.bind(*args, **kwargs)
-  File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    return self._bind(args, kwargs)
-           ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    raise TypeError(
-        'got an unexpected keyword argument {arg!r}'.format(
-            arg=next(iter(kwargs))))
-TypeError: got an unexpected keyword argument 'on_value_change'
-2026-03-10T10:15:49 [ERROR] nicegui: got an unexpected keyword argument 'on_value_change'
-  + Exception Group Traceback (most recent call last):
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 81, in collapse_excgroups
-  |     yield
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 192, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
-  |   File "/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
-  |     raise BaseExceptionGroup(
-  |         "unhandled errors in a TaskGroup", self._exceptions
-  |     ) from None
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
-    |     await self.app(scope, receive, send_wrapper)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
-    |     await responder(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
-    |     await self.app(scope, receive, self.send_with_compression)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    |     await route.handle(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
-    |     raw_response = await run_endpoint_function(
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<3 lines>...
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
-    |     return await dependant.call(**values)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
-    |     result = task.result()
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
-    |     return create_500_error_page(e, request)
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
-    |     raise e
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
-    |     return await result
-    |            ^^^^^^^^^^^^
-    |   File "/app/app/pages/objects.py", line 351, in objects_page
-    |     search = ui.input(
-    |              ~~~~~~~~^
-    |         placeholder="Quick filter…",
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<2 lines>...
-    |         ),
-    |         ^^
-    |     ).props(
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    |     bound = signature.bind(*args, **kwargs)
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    |     return self._bind(args, kwargs)
-    |            ~~~~~~~~~~^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    |     raise TypeError(
-    |         'got an unexpected keyword argument {arg!r}'.format(
-    |             arg=next(iter(kwargs))))
-    | TypeError: got an unexpected keyword argument 'on_value_change'
-    +------------------------------------
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+2026-03-10T10:22:30 [ERROR] nicegui: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
 
 The above exception was the direct cause of the following exception:
 
@@ -1247,182 +734,42 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
     return await result
            ^^^^^^^^^^^^
-  File "/app/app/pages/objects.py", line 351, in objects_page
-    search = ui.input(
-             ~~~~~~~~^
-        placeholder="Quick filter…",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<2 lines>...
-        ),
-        ^^
-    ).props(
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
     ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    bound = signature.bind(*args, **kwargs)
-  File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    return self._bind(args, kwargs)
-           ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    raise TypeError(
-        'got an unexpected keyword argument {arg!r}'.format(
-            arg=next(iter(kwargs))))
-TypeError: got an unexpected keyword argument 'on_value_change'
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
 ERROR:    Exception in ASGI application
-  + Exception Group Traceback (most recent call last):
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 81, in collapse_excgroups
-  |     yield
-  |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 192, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
-  |   File "/usr/local/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
-  |     raise BaseExceptionGroup(
-  |         "unhandled errors in a TaskGroup", self._exceptions
-  |     ) from None
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "/usr/local/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
-    |     result = await app(  # type: ignore[func-returns-value]
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |         self.scope, self.receive, self.send
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
-    |     return await self.app(scope, receive, send)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
-    |     await self.app(scope, receive, send_wrapper)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ~~~~~~~~~~~~~~~~~~^^
-    |   File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
-    |     self.gen.throw(value)
-    |     ~~~~~~~~~~~~~~^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
-    |     await responder(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
-    |     await self.app(scope, receive, self.send_with_compression)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    |     await route.handle(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    |     await self.app(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
-    |     raw_response = await run_endpoint_function(
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<3 lines>...
-    |     )
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
-    |     return await dependant.call(**values)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
-    |     result = task.result()
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
-    |     return create_500_error_page(e, request)
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
-    |     raise e
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
-    |     return await result
-    |            ^^^^^^^^^^^^
-    |   File "/app/app/pages/objects.py", line 351, in objects_page
-    |     search = ui.input(
-    |              ~~~~~~~~^
-    |         placeholder="Quick filter…",
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |     ...<2 lines>...
-    |         ),
-    |         ^^
-    |     ).props(
-    |     ^
-    |   File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    |     bound = signature.bind(*args, **kwargs)
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    |     return self._bind(args, kwargs)
-    |            ~~~~~~~~~~^^^^^^^^^^^^^^
-    |   File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    |     raise TypeError(
-    |         'got an unexpected keyword argument {arg!r}'.format(
-    |             arg=next(iter(kwargs))))
-    | TypeError: got an unexpected keyword argument 'on_value_change'
-    +------------------------------------
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
 
 The above exception was the direct cause of the following exception:
 
@@ -1548,23 +895,649 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
     return await result
            ^^^^^^^^^^^^
-  File "/app/app/pages/objects.py", line 351, in objects_page
-    search = ui.input(
-             ~~~~~~~~^
-        placeholder="Quick filter…",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<2 lines>...
-        ),
-        ^^
-    ).props(
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
     ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/defaults.py", line 56, in decorated
-    bound = signature.bind(*args, **kwargs)
-  File "/usr/local/lib/python3.13/inspect.py", line 3306, in bind
-    return self._bind(args, kwargs)
-           ~~~~~~~~~~^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/inspect.py", line 3295, in _bind
-    raise TypeError(
-        'got an unexpected keyword argument {arg!r}'.format(
-            arg=next(iter(kwargs))))
-TypeError: got an unexpected keyword argument 'on_value_change'
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+2026-03-10T10:22:30 [ERROR] nicegui: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
+    await self.app(scope, receive, send_wrapper)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
+    result = task.result()
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
+    return create_500_error_page(e, request)
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
+    raise e
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
+    return await result
+           ^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
+    await self.app(scope, receive, send_wrapper)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
+    result = task.result()
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
+    return create_500_error_page(e, request)
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
+    raise e
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
+    return await result
+           ^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+2026-03-10T10:22:30 [ERROR] nicegui: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
+    await self.app(scope, receive, send_wrapper)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
+    result = task.result()
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
+    return create_500_error_page(e, request)
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
+    raise e
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
+    return await result
+           ^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/app/app/pages/objects.py", line 219, in fetch_objects
+    resp = s3_client.list_objects_v2(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'S3Manager' object has no attribute 'list_objects_v2'. Did you mean: 'list_objects'?
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/sessions.py", line 85, in __call__
+    await self.app(scope, receive, send_wrapper)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/storage.py", line 38, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 23, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/middlewares.py", line 13, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/usr/local/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 190, in decorated
+    result = task.result()
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 171, in wait_for_result
+    return create_500_error_page(e, request)
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 130, in create_500_error_page
+    raise e
+  File "/usr/local/lib/python3.13/site-packages/nicegui/page.py", line 168, in wait_for_result
+    return await result
+           ^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 985, in objects_page
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
+  File "/app/app/pages/objects.py", line 545, in _reload_grid
+    rows = await loop.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/app/app/pages/objects.py", line 546, in <lambda>
+    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/pages/objects.py", line 256, in fetch_objects
+    ui.notify(f"Error fetching objects: {exc}", type="negative")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/functions/notify.py", line 52, in notify
+    client = context.client
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 41, in client
+    return self.slot.parent.client
+           ^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/nicegui/context.py", line 33, in slot
+    raise RuntimeError('The current slot cannot be determined because the slot stack for this task is empty.\n'
+                       'This may happen if you try to create UI from a background task.\n'
+                       'To fix this, enter the target slot explicitly using `with container_element:`.')
+RuntimeError: The current slot cannot be determined because the slot stack for this task is empty.
+This may happen if you try to create UI from a background task.
+To fix this, enter the target slot explicitly using `with container_element:`.
