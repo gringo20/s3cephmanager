@@ -221,13 +221,14 @@ Gestionarea vizuală a accesului utilizatorilor RGW la bucket (via S3 Bucket Pol
 **URL**: `/objects`
 
 Browser de fișiere S3 cu navigare hierarhică (folder-uri virtuale bazate pe prefix `/`).
+Lista de obiecte este redată cu **AG Grid** — oferă paginare client-side, filtrare live și selecție bulk.
 
 ### 4.1 Panoul stâng — Arbore de folder-uri
 
 - Afișează bucket-ul activ și structura de folder-uri (prefix-uri)
-- Click pe un folder → navighează la acel prefix
+- Click pe un folder → navighează la acel prefix; arborele se actualizează și afișează sub-folder-urile
 - Click pe **bucket name** → revine la rădăcina bucket-ului
-- Folder-urile sunt încărcate leneș (lazy) — sub-folder-urile se expandează la click
+- Sincronizat cu breadcrumb-ul și grila principală
 
 ### 4.2 Breadcrumb
 
@@ -235,78 +236,83 @@ Browser de fișiere S3 cu navigare hierarhică (folder-uri virtuale bazate pe pr
 - Click pe orice segment → navighează direct la acel nivel
 - Util pentru navigare rapidă înapoi în ierarhie
 
-### 4.3 Toolbar (bara de instrumente)
+### 4.3 Quick filter
+
+- Câmpul **Quick filter...** din colțul dreapta-sus filtrează rândurile din grilă **instant**, pe client, fără apel la server
+- Filtrare după coloana **Name**; folderele și fișierele care nu se potrivesc dispar din listă
+- Ștergerea filtrului (× sau Backspace) restaurează lista completă
+
+### 4.4 Toolbar (bara de instrumente)
 
 | Buton | Scurtătură | Descriere |
 |---|---|---|
-| **Upload** | `U` | Deschide dialogul de upload fișiere |
-| **New Folder** | `N` | Creează un folder virtual nou (obiect placeholder) |
-| **Copy to Bucket** | — | Copiază obiecte selectate în alt bucket |
-| **Delete Selected** | — | Șterge obiectele selectate (cu confirmare) |
-| **Search** | — | Caută obiecte după nume în bucket-ul curent |
+| **Upload ▾** | `U` | Deschide dialogul de upload fișiere; ▾ deschide meniu cu „Upload folder" |
+| **Download** | — | Descarcă obiectele selectate (fișiere individuale sau arhivă) |
+| **Copy** | — | Copiază obiectele selectate în același bucket (cu prefix destinație nou) |
+| **Delete Selected** | — | Șterge obiectele selectate (cu dialog de confirmare) |
+| **New Folder** | `N` | Creează un folder virtual nou (obiect placeholder cu sufix `/`) |
+| **Copy to Bucket** | — | Copiază obiectele selectate cross-bucket (server-side, fără descărcare locală) |
 | **Refresh** | `R` | Reîncarcă lista obiectelor din prefix-ul curent |
 
-### 4.4 Tabelul de obiecte
+### 4.5 Grila de obiecte (AG Grid)
 
-Coloane:
+Grila afișează conținutul prefix-ului curent cu paginare client-side.
+
+**Coloane:**
 
 | Coloană | Descriere |
 |---|---|
-| ☑️ | Checkbox selecție |
-| **Name** | Numele fișierului sau folder-ului virtual |
-| **Size** | Dimensiunea fișierului (folder-urile afișează `—`) |
-| **Last Modified** | Data ultimei modificări |
-| **Actions** | Butoane de acțiune per rând |
+| ☑️ | Checkbox selecție (header-checkbox = selectează tot) |
+| 📁 / 📄 | Iconiță tip: folder (galben), fișier (gri), `..` parinte (albastru) |
+| **Name** | Numele fișierului sau folder-ului; click pe folder / `..` → navighează |
+| **Size** | Dimensiunea fișierului formatată (ex: `12.4 MB`); `—` pentru foldere |
+| **Modified** | Data și ora ultimei modificări |
+| 👁 | (fișier) Previzualizare inline în dialog |
+| ⬇ | (fișier) Descărcare directă prin presigned URL |
+| 📋 | (fișier / folder) Copiere în același bucket |
+| ✏ | (fișier) Redenumire / mutare (copiere + ștergere) |
+| 🔗 | (fișier) Generare presigned URL temporar |
+| 🗑 | (fișier / folder) Ștergere (folder = recursiv cu confirmare) |
 
-#### Acțiuni per rând (fișier):
+**Paginare footer:**
 
-| Buton | Descriere |
-|---|---|
-| ⬇️ **Download** | Descarcă fișierul direct din browser |
-| 🔗 **Presigned URL** | Generează un URL de descărcare temporar |
-| ℹ️ **Info** | Afișează metadatele complete ale obiectului |
-| ✏️ **Rename** | Redenumește fișierul (copiere + ștergere) |
-| 🗑️ **Delete** | Șterge fișierul definitiv |
+- Selector **Page Size**: 25 / 50 / 100 / 250 rânduri per pagină
+- Navigare pagini: `|<` `<` `>` `>|`
+- Contor: `1 to N of Total`
 
-#### Acțiuni per rând (folder virtual):
+> **Notă**: Prima linie a grilei poate fi `..` (parinte) dacă vă aflați într-un sub-folder. Click pe ea revine la nivelul superior.
 
-| Buton | Descriere |
-|---|---|
-| 📂 **Open** | Navighează în interiorul folder-ului |
-| 🗑️ **Delete Folder** | Șterge recursiv toate obiectele din folder |
+### 4.6 Selecție și acțiuni bulk
 
-### 4.5 Dialogul Upload
+1. Bifați rândurile dorite cu checkbox-urile din coloana ☑️
+2. Contorul **N selected** apare în bara de sub toolbar
+3. Click **Delete selected** → dialog de confirmare → ștergere în loturi de 1 000 chei (limita S3)
+4. Alternativ, folosiți **Copy to Bucket** sau **Download** din toolbar pentru obiectele selectate
 
-- Suportă selecție multiplă de fișiere sau drag & drop
-- Afișează progresul per fișier (bara procentuală, viteză, ETA)
-- Upload multipart automat pentru fișiere mari (prag configurat în Settings)
-- Câmpul **Prefix** permite specificarea unui subfolder țintă manual
+### 4.7 Dialogul Upload
 
-### 4.6 Dialogul Presigned URL
+- Suportă selecție multiplă de fișiere sau **drag & drop**
+- Progres per fișier: bara procentuală, viteză (MB/s), ETA
+- Upload multipart automat pentru fișiere mari (prag configurabil în Settings, implicit 64 MB)
+- Câmpul **Prefix** permite specificarea unui subfolder destinație manual
 
-- Afișează URL-ul generat cu data expirării
-- **Expiry**: configurat în Settings (default: 3600 secunde / 1 oră)
-- URL-ul conține `ResponseContentDisposition: attachment` → browserul va descărca fișierul automat în loc să îl afișeze în tab
+### 4.8 Dialogul Presigned URL
+
+- Afișează URL-ul generat cu data și ora expirării
+- **Expiry**: configurat în Settings (implicit: 3600 s / 1 oră)
+- `ResponseContentDisposition: attachment` → browserul descarcă automat fișierul
 - **Copy** — copiază URL-ul în clipboard
-- **Open** — deschide URL-ul direct în browser (declanșează descărcarea)
+- **Open** — deschide URL-ul în tab nou (declanșează descărcarea)
 
-### 4.7 Dialogul Copy to Bucket
+### 4.9 Dialogul Copy to Bucket (cross-bucket)
 
-Copiere cross-bucket:
-
-1. Selectați obiectele dorite (checkbox-uri)
-2. Click **Copy to Bucket**
+1. Selectați obiectele dorite
+2. Click **Copy to Bucket** în toolbar
 3. Alegeți bucket-ul destinație din dropdown
-4. Specificați opțional un prefix destinație
-5. Click **Copy** — obiectele sunt copiate fără a fi descărcate local
+4. (Opțional) specificați un prefix destinație
+5. Click **Copy** — copiere server-side, fără descărcare locală
 
-### 4.8 Paginare (Load More)
-
-- Implicit se afișează N obiecte (configurat în Settings → Page Size)
-- Butonul **Load More** apare la baza tabelului când există mai multe obiecte
-- Click → încarcă următoarea pagină și o adaugă la lista existentă
-
-### 4.9 Scurtături tastatură
+### 4.10 Scurtături tastatură
 
 | Tastă | Acțiune |
 |---|---|
@@ -506,4 +512,4 @@ Preferințele sunt stocate per sesiune (`app.storage.user`) și aplicate imediat
 
 ---
 
-*Generat pentru CephS3Manager v1.0 · NiceGUI + FastAPI + boto3 + Ceph RGW*
+*CephS3Manager v1.1 · NiceGUI + FastAPI + AG Grid + boto3 + Ceph RGW*
