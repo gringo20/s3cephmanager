@@ -98,6 +98,166 @@ async def _preview_proxy_route(token: str):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  AG Grid helpers – column defs + data fetch
+# ─────────────────────────────────────────────────────────────────────────────
+
+_ACT_STYLE = (
+    "cursor:pointer;font-size:1rem;line-height:1.8;"
+    "vertical-align:middle;display:block;text-align:center;"
+)
+
+_GRID_COLDEFS: list[dict] = [
+    # Checkbox + type icon
+    {
+        "headerCheckboxSelection": True,
+        "checkboxSelection": True,
+        "headerName": "",
+        "colId": "col_icon",
+        "field": "type",
+        "width": 64, "minWidth": 64, "maxWidth": 64,
+        "sortable": False, "filter": False,
+        ":getQuickFilterText": "() => ''",
+        ":cellRenderer": r"""(p) => {
+            const m = {up:'arrow_upward', folder:'folder', file:'insert_drive_file'};
+            const c = {up:'#58a6ff', folder:'#d29922', file:'#8b949e'};
+            const t = p.data.type;
+            return `<span class="material-icons"
+                style="font-size:1.05rem;color:${c[t]||'#8b949e'};
+                       line-height:1.8;display:block;text-align:center"
+                >${m[t]||'insert_drive_file'}</span>`;
+        }""",
+    },
+    # Name (click = navigate for folders / ".." rows)
+    {
+        "headerName": "Name",
+        "colId": "col_name",
+        "field": "name",
+        "flex": 1, "minWidth": 200,
+        "sortable": True, "filter": True,
+        ":getQuickFilterText": "(p) => p.data.name",
+        ":cellRenderer": r"""(p) => {
+            const nav = p.data.type !== 'file';
+            return `<span style="color:${nav?'#58a6ff':'#e6edf3'};
+                                 font-weight:${nav?600:400};
+                                 cursor:${nav?'pointer':'default'};
+                                 font-size:0.87rem">${p.value}</span>`;
+        }""",
+    },
+    # Size
+    {
+        "headerName": "Size",
+        "colId": "col_size",
+        "field": "size",
+        "width": 120, "type": "rightAligned",
+        "sortable": True, "filter": False,
+        ":getQuickFilterText": "() => ''",
+    },
+    # Modified
+    {
+        "headerName": "Modified",
+        "colId": "col_mtime",
+        "field": "mtime",
+        "width": 170, "sortable": True, "filter": False,
+        ":getQuickFilterText": "() => ''",
+        ":valueFormatter": r"""(p) => p.value > 0
+            ? new Date(p.value).toLocaleString([], {
+                year:'numeric', month:'2-digit', day:'2-digit',
+                hour:'2-digit', minute:'2-digit'})
+            : '—'""",
+    },
+    # ── Action columns (narrow; colId tells Python which action was clicked) ──
+    {
+        "headerName": "", "colId": "act_preview", "field": "type",
+        "width": 36, "minWidth": 36, "maxWidth": 36,
+        "sortable": False, "filter": False, ":getQuickFilterText": "() => ''",
+        ":cellRenderer": f"(p) => p.data.type==='file' ? `<span class='material-icons' title='Preview' style='color:#4caf50;{_ACT_STYLE}'>visibility</span>` : ''",
+    },
+    {
+        "headerName": "", "colId": "act_dl", "field": "type",
+        "width": 36, "minWidth": 36, "maxWidth": 36,
+        "sortable": False, "filter": False, ":getQuickFilterText": "() => ''",
+        ":cellRenderer": f"(p) => p.data.type==='file' ? `<span class='material-icons' title='Download' style='color:#58a6ff;{_ACT_STYLE}'>download</span>` : ''",
+    },
+    {
+        "headerName": "", "colId": "act_copy", "field": "type",
+        "width": 36, "minWidth": 36, "maxWidth": 36,
+        "sortable": False, "filter": False, ":getQuickFilterText": "() => ''",
+        ":cellRenderer": f"(p) => p.data.type!=='up' ? `<span class='material-icons' title='Copy' style='color:#26c6da;{_ACT_STYLE}'>content_copy</span>` : ''",
+    },
+    {
+        "headerName": "", "colId": "act_rename", "field": "type",
+        "width": 36, "minWidth": 36, "maxWidth": 36,
+        "sortable": False, "filter": False, ":getQuickFilterText": "() => ''",
+        ":cellRenderer": f"(p) => p.data.type==='file' ? `<span class='material-icons' title='Rename / Move' style='color:#ffa726;{_ACT_STYLE}'>edit</span>` : ''",
+    },
+    {
+        "headerName": "", "colId": "act_presign", "field": "type",
+        "width": 36, "minWidth": 36, "maxWidth": 36,
+        "sortable": False, "filter": False, ":getQuickFilterText": "() => ''",
+        ":cellRenderer": f"(p) => p.data.type==='file' ? `<span class='material-icons' title='Presigned URL' style='color:#ab47bc;{_ACT_STYLE}'>link</span>` : ''",
+    },
+    {
+        "headerName": "", "colId": "act_del", "field": "type",
+        "width": 36, "minWidth": 36, "maxWidth": 36,
+        "sortable": False, "filter": False, ":getQuickFilterText": "() => ''",
+        ":cellRenderer": f"(p) => p.data.type!=='up' ? `<span class='material-icons' title='Delete' style='color:#ef5350;{_ACT_STYLE}'>delete</span>` : ''",
+    },
+]
+
+
+def fetch_objects(s3_client, bucket: str, prefix: str = "") -> list[dict]:
+    """
+    One-level listing via list_objects_v2 with delimiter='/'.
+    Returns aggrid-ready row dicts (folders first, then files).
+    Blocking – always call inside run_in_executor.
+
+    NOTE: list_objects_v2 returns max 1 000 keys per call.
+    For buckets with >1 000 objects under a prefix, add a paginator loop
+    using resp['NextContinuationToken'] here when needed.
+    """
+    try:
+        resp = s3_client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=prefix,
+            Delimiter="/",
+        )
+        rows: list[dict] = []
+
+        for cp in resp.get("CommonPrefixes") or []:
+            pref = cp["Prefix"]
+            rows.append({
+                "key":   pref,
+                "type":  "folder",
+                "name":  pref[len(prefix):],
+                "size":  "—",
+                "mtime": 0,
+                "etag":  "",
+            })
+
+        for obj in resp.get("Contents") or []:
+            key = obj["Key"]
+            if key.endswith("/"):
+                continue
+            name = key[len(prefix):]
+            if not name:
+                continue
+            lm = obj.get("LastModified")
+            rows.append({
+                "key":   key,
+                "type":  "file",
+                "name":  name,
+                "size":  humanize.naturalsize(obj.get("Size", 0)),
+                "mtime": int(lm.timestamp() * 1000) if lm else 0,
+                "etag":  obj.get("ETag", "").strip('"'),
+            })
+
+        return rows
+    except Exception as exc:
+        ui.notify(f"Error fetching objects: {exc}", type="negative")
+        return []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  Page entry-point
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -117,15 +277,10 @@ async def objects_page() -> None:
         return
 
     s3 = get_s3_from_conn(conn)
-    settings = app.storage.user.get("settings") or {}
-    page_size = int(settings.get("page_size", 200))
     state: dict = {
-        "prefix":        app.storage.user.get("active_prefix", ""),
-        "selected":      [],    # list[str] – currently selected object keys
-        "next_token":    None,  # continuation token for pagination
-        "load_more_ref": None,  # set after widget is created
-        "page_size":     page_size,
-        "all_rows":      [],    # full row snapshot used by live search
+        "prefix":   app.storage.user.get("active_prefix", ""),
+        "selected": [],    # list[str] – currently selected object keys
+        "all_rows": [],    # snapshot kept for legacy callers
     }
 
     # Palette
@@ -163,7 +318,7 @@ async def objects_page() -> None:
         # content exceeds the flex-container height (calc(100vh - 56px)).
         with ui.column().style(
             "flex:1; min-width:0; min-height:0; padding:18px 22px; gap:12px; "
-            "overflow-y:auto;"
+            "overflow:hidden;"
         ):
 
             # Top bar
@@ -193,15 +348,21 @@ async def objects_page() -> None:
                     )
 
                 with ui.row().style("gap:6px; align-items:center;"):
-                    search = ui.input(placeholder="Search…").props(
-                        "dense outlined dark" if dark else "dense outlined"
+                    search = ui.input(
+                        placeholder="Quick filter…",
+                        on_value_change=lambda e: grid.run_grid_method(
+                            "setGridOption", "quickFilterText", e.value or ""
+                        ),
+                    ).props(
+                        ("dense outlined clearable dark"
+                         if dark else "dense outlined clearable")
                     ).style(_inp(dark) + "width:200px;")
-                    search.on("input",
-                              lambda e: _apply_search(table, state,
-                                                      e.sender.value or ""))
                     ui.button(
                         icon="refresh",
-                        on_click=lambda: _reload(table, tree_list, brow, s3, bucket, state, dark),
+                        on_click=lambda: asyncio.ensure_future(
+                            _reload_grid(grid, count_lbl, s3, bucket, state,
+                                         tree_list, brow, dark)
+                        ),
                     ).props("flat round").style(f"color:{C['mut']};")
 
             # Breadcrumb (re-rendered on every navigate)
@@ -235,8 +396,10 @@ async def objects_page() -> None:
                             copy_dlg, copy_dst_inp, copy_err, state, C
                         ), C)
                 _tb_btn("delete", "Delete Selected",
-                        lambda: _bulk_delete(s3, bucket, state, modal,
-                                             table, tree_list, brow, dark), C, danger=True)
+                        lambda: asyncio.ensure_future(
+                            _bulk_delete(s3, bucket, state, modal,
+                                         grid, tree_list, brow, dark)
+                        ), C, danger=True)
                 _tb_btn("create_new_folder", "New Folder",
                         lambda: folder_dlg.open(), C)
                 _tb_btn("swap_horiz", "Copy to Bucket",
@@ -245,150 +408,265 @@ async def objects_page() -> None:
                             xb_info, xb_err, state, s3, conn,
                         ), C)
 
-            # ── Object table ──────────────────────────────────────────────────
-            columns = [
-                {"name": "icon",  "label": "",         "field": "type",  "align": "left"},
-                {"name": "name",  "label": "Name",      "field": "name",
-                 "align": "left",  "sortable": True},
-                {"name": "size",  "label": "Size",      "field": "size",
-                 "align": "right", "sortable": True},
-                {"name": "mtime", "label": "Modified",  "field": "mtime",
-                 "align": "left",  "sortable": True},
-                {"name": "acts",  "label": "",          "field": "key",   "align": "right"},
-            ]
-            table = ui.table(
-                columns=columns,
-                rows=[],
-                row_key="key",
-                selection="multiple",
-                pagination={"rowsPerPage": 25, "sortBy": "name"},
-                # Keep Python-side pagination in sync so table.update() after
-                # search/reload doesn't reset the user's chosen rows-per-page.
-                # NiceGUI fires on_pagination_change as ValueChangeEventArguments
-                # → new value is in e.value (not e.args).
-                on_pagination_change=lambda e: (
-                    table._props.update({"pagination": e.value})
-                    if isinstance(e.value, dict) else None
-                ),
-            ).style(
-                f"background:{C['tbg']}; border:1px solid {C['bdr']}; "
-                "border-radius:10px; width:100%;"
-            ).props(
-                ('flat dark' if dark else 'flat') +
-                ' :rows-per-page-options="[10,25,50,100]"'
-            )
-
-            # ── Slots ──────────────────────────────────────────────────────────
-
-            # Icon column
-            table.add_slot("body-cell-icon", r"""
-                <q-td :props="props" style="width:30px; padding:0 0 0 12px;">
-                  <q-icon
-                    :name="props.row.type === 'up'     ? 'arrow_upward'       :
-                           props.row.type === 'folder' ? 'folder'             :
-                                                         'insert_drive_file'"
-                    :style="props.row.type === 'up'     ? 'color:#58a6ff' :
-                            props.row.type === 'folder' ? 'color:#d29922' :
-                                                          'color:#8b949e'"
-                    style="font-size:1.05rem;"
-                  />
-                </q-td>
-            """)
-
-            # Name column  (folder/.. = navigate link, file = plain text)
-            table.add_slot("body-cell-name", r"""
-                <q-td :props="props">
-                  <span
-                    :style="props.row.type !== 'file'
-                      ? 'color:#58a6ff; font-weight:600; cursor:pointer; font-size:0.87rem;'
-                      : 'color:#e6edf3; font-size:0.87rem;'"
-                    @click="props.row.type !== 'file'
-                      ? $parent.$emit('navigate', props.row)
-                      : null"
-                  >{{ props.value }}</span>
-                </q-td>
-            """)
-
-            # Actions column  (hidden for ".." row)
-            table.add_slot("body-cell-acts", r"""
-                <q-td :props="props" style="text-align:right; white-space:nowrap; padding-right:8px;">
-                  <template v-if="props.row.type === 'file'">
-                    <q-btn flat dense round icon="visibility" color="green-4" size="xs"
-                           @click="$parent.$emit('preview', props.row)"><q-tooltip>Preview</q-tooltip></q-btn>
-                    <q-btn flat dense round icon="download" color="blue-4"   size="xs"
-                           @click="$parent.$emit('dl',      props.row)"><q-tooltip>Download</q-tooltip></q-btn>
-                    <q-btn flat dense round icon="content_copy" color="teal-4" size="xs"
-                           @click="$parent.$emit('copy_one',props.row)"><q-tooltip>Copy</q-tooltip></q-btn>
-                    <q-btn flat dense round icon="edit"     color="orange-4" size="xs"
-                           @click="$parent.$emit('rename',  props.row)"><q-tooltip>Rename / Move</q-tooltip></q-btn>
-                    <q-btn flat dense round icon="link"     color="purple-4" size="xs"
-                           @click="$parent.$emit('presign', props.row)"><q-tooltip>Presigned URL</q-tooltip></q-btn>
-                  </template>
-                  <template v-if="props.row.type === 'folder'">
-                    <q-btn flat dense round icon="content_copy" color="teal-4" size="xs"
-                           @click="$parent.$emit('copy_folder', props.row)"><q-tooltip>Copy folder</q-tooltip></q-btn>
-                  </template>
-                  <template v-if="props.row.type !== 'up'">
-                    <q-btn flat dense round icon="delete"   color="red-4"    size="xs"
-                           @click="$parent.$emit('del_one', props.row)"><q-tooltip>Delete</q-tooltip></q-btn>
-                  </template>
-                </q-td>
-            """)
-
-            # Modified-date column – formatted client-side (browser local timezone)
-            table.add_slot("body-cell-mtime", r"""
-                <q-td :props="props" style="white-space:nowrap; font-size:0.83rem;">
-                  {{ props.row.mtime > 0
-                      ? new Date(props.row.mtime).toLocaleString([], {
-                            year:'numeric', month:'2-digit', day:'2-digit',
-                            hour:'2-digit', minute:'2-digit'})
-                      : '—' }}
-                </q-td>
-            """)
-
-            # Wire table events
-            table.on("navigate",
-                     lambda e: _navigate(e.args.get("key", ""),
-                                         table, tree_list, brow, s3, bucket, state, dark))
-            table.on("dl",
-                     lambda e: _download_one(s3, bucket, e.args.get("key", "")))
-            table.on("copy_one",
-                     lambda e: _open_copy_dlg(copy_dlg, copy_dst_inp, copy_err,
-                                              state, C, single_key=e.args.get("key", "")))
-            table.on("copy_folder",
-                     lambda e: _open_copy_dlg(copy_dlg, copy_dst_inp, copy_err,
-                                              state, C, single_key=e.args.get("key", "")))
-            table.on("rename",
-                     lambda e: _pre_rename(e.args, rename_dlg, rename_src, rename_inp))
-            table.on("presign",
-                     lambda e: _pre_presign(e.args, presign_dlg, presign_key, presign_url))
-            table.on("del_one",
-                     lambda e: _delete_one(s3, bucket, e.args, modal,
-                                           table, tree_list, brow, state, dark))
-            table.on("preview",
-                     lambda e: _pre_preview(e.args))
-            table.on("selection",
-                     lambda e: state.update(
-                         {"selected": [r["key"] for r in e.args.get("rows", [])
-                                       if r.get("type") == "file"]}
-                     ))
-
-            # ── Load More button (shown only when results are truncated) ───────
-            # NOTE: .set_visibility() returns None in NiceGUI 3.x — must not chain
-            load_more_row = ui.row().style(
-                "justify-content:center; width:100%; padding:8px 0;"
-            )
-            load_more_row.set_visibility(False)
-            state["load_more_ref"] = load_more_row
-            with load_more_row:
-                ui.button(
-                    "Load More", icon="expand_more",
-                    on_click=lambda: _load_more(table, tree_list, brow, load_more_row,
-                                               s3, bucket, state, dark, state["page_size"]),
-                ).props("no-caps flat").style(
-                    f"color:{C['blue']}; border:1px solid {C['bdr']}; "
-                    "border-radius:8px; font-size:0.82rem;"
+            # ── Object grid (ui.aggrid replaces ui.table) ─────────────────────
+            # object count badge
+            with ui.row().style(
+                "align-items:center; justify-content:space-between; width:100%; "
+                "padding:2px 0;"
+            ):
+                count_lbl = ui.label("").style(
+                    f"color:{C['mut']}; font-size:0.78rem;"
                 )
+                # loading spinner (hidden until a fetch is in-flight)
+                spin = ui.spinner("dots", size="sm").style(
+                    f"color:{C['blue']};"
+                )
+                spin.set_visibility(False)
+
+            # bulk-action bar (enabled only when rows are selected)
+            with ui.row().style(
+                f"align-items:center; gap:6px; width:100%; "
+                f"padding:4px 0; border-bottom:1px solid {C['bdr']}44;"
+            ):
+                sel_lbl = ui.label("0 selected").style(
+                    f"color:{C['mut']}; font-size:0.78rem; margin-right:4px;"
+                )
+                bulk_del_btn = ui.button(
+                    "Delete selected", icon="delete",
+                    on_click=lambda: asyncio.ensure_future(_delete_selected()),
+                ).props("no-caps dense flat").style(
+                    "color:#ef5350; font-size:0.82rem;"
+                )
+                bulk_del_btn.set_enabled(False)
+
+            # AG Grid theme via CSS custom properties
+            _ag_css = (
+                f"--ag-background-color:{C['tbg']};"
+                f"--ag-header-background-color:{C['sbg']};"
+                f"--ag-odd-row-background-color:{C['tbg']};"
+                f"--ag-row-hover-color:{C['act_bg']};"
+                f"--ag-selected-row-background-color:{C['act_bg']};"
+                f"--ag-border-color:{C['bdr']};"
+                f"--ag-row-border-color:{C['bdr']};"
+                f"--ag-foreground-color:{C['txt']};"
+                f"--ag-header-foreground-color:{C['txt']};"
+                f"--ag-secondary-foreground-color:{C['mut']};"
+                f"--ag-checkbox-checked-color:{C['active']};"
+                f"--ag-checkbox-unchecked-color:{C['mut']};"
+                f"--ag-input-focus-border-color:{C['active']};"
+                f"--ag-pagination-background-color:{C['sbg']};"
+            )
+
+            grid = ui.aggrid(
+                options={
+                    "columnDefs": _GRID_COLDEFS,
+                    "rowData": [],
+                    ":getRowId": "(p) => p.data.key",
+                    "rowSelection": "multiple",
+                    "suppressRowClickSelection": True,
+                    # Pagination – AG Grid handles client-side paging
+                    "pagination": True,
+                    "paginationPageSize": 50,
+                    ":paginationPageSizeSelector": "[25, 50, 100, 250]",
+                    # 'normal' = fixed height; grid owns the scrollbar
+                    # This is required for virtual scrolling to work correctly.
+                    "domLayout": "normal",
+                    "animateRows": False,
+                    "suppressMovableColumns": True,
+                    "suppressCellFocus": True,
+                    "defaultColDef": {"resizable": True},
+                    "overlayNoRowsTemplate": (
+                        f'<span style="color:{C["mut"]};font-size:0.9rem">'
+                        "Empty folder</span>"
+                    ),
+                    # For future infinite-row-model pagination uncomment:
+                    # 'rowModelType': 'infinite',
+                    # 'cacheBlockSize': 100,
+                    # 'maxBlocksInCache': 5,
+                },
+            ).style(
+                # h-[60vh] equivalent — fixed height enables virtual scrolling
+                f"width:100%; height:calc(100vh - 310px); min-height:300px; "
+                f"border:1px solid {C['bdr']}; border-radius:10px; "
+                f"overflow:hidden; {_ag_css}"
+            )
+
+            # ── Shared confirm dialog (reused for delete / overwrite prompts) ──
+            with ui.dialog() as _confirm_dlg, ui.card().style(
+                f"background:{C['sbg']}; border:1px solid {C['bdr']}; "
+                "min-width:360px; padding:22px; gap:14px;"
+            ):
+                _confirm_title_lbl = ui.label("").style(
+                    f"color:{C['txt']}; font-weight:700; font-size:1rem;"
+                )
+                _confirm_body_lbl = ui.label("").style(
+                    f"color:{C['mut']}; font-size:0.85rem; line-height:1.5;"
+                )
+                with ui.row().style(
+                    "justify-content:flex-end; gap:8px; margin-top:6px;"
+                ):
+                    ui.button(
+                        "Cancel",
+                        on_click=lambda: _confirm_dlg.submit(False),
+                    ).props("flat no-caps").style(f"color:{C['mut']};")
+                    _confirm_ok_btn = ui.button(
+                        "Confirm",
+                        on_click=lambda: _confirm_dlg.submit(True),
+                    ).props("no-caps").style(
+                        "background:#da3633; color:#fff; border-radius:8px;"
+                    )
+
+            async def _confirm(title: str, body: str, danger: bool = True) -> bool:
+                _confirm_title_lbl.set_text(title)
+                _confirm_body_lbl.set_text(body)
+                _confirm_ok_btn.style(
+                    "background:#da3633; color:#fff; border-radius:8px;"
+                    if danger else
+                    "background:#1f6feb; color:#fff; border-radius:8px;"
+                )
+                return await _confirm_dlg
+
+            # ── Grid event handlers ───────────────────────────────────────────
+
+            async def _reload_grid(
+                grid, count_lbl, s3, bucket: str, state: dict,
+                tree_list, brow, dark: bool,
+            ) -> None:
+                """
+                Fetch objects for current prefix, push to aggrid via Grid API
+                (no grid.update() → preserves sort/filter/page state).
+                Also rebuilds breadcrumb and folder tree.
+                """
+                spin.set_visibility(True)
+                loop = asyncio.get_event_loop()
+                rows = await loop.run_in_executor(
+                    None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                )
+
+                # Prepend ".." navigation row when inside a sub-prefix
+                all_rows: list[dict] = []
+                if state["prefix"]:
+                    parent = "/".join(
+                        state["prefix"].rstrip("/").split("/")[:-1]
+                    )
+                    if parent:
+                        parent += "/"
+                    all_rows.append({
+                        "key":   parent,
+                        "type":  "up",
+                        "name":  "..",
+                        "size":  "",
+                        "mtime": 0,
+                        "etag":  "",
+                    })
+                all_rows.extend(rows)
+                state["all_rows"] = all_rows
+
+                # Push data via AG Grid API (non-destructive to grid state)
+                grid.run_grid_method("setGridOption", "rowData", all_rows)
+
+                n_files = sum(1 for r in all_rows if r["type"] == "file")
+                n_folders = sum(1 for r in all_rows if r["type"] == "folder")
+                parts = []
+                if n_folders:
+                    parts.append(f"{n_folders} folder{'s' if n_folders != 1 else ''}")
+                if n_files:
+                    parts.append(f"{n_files} file{'s' if n_files != 1 else ''}")
+                count_lbl.set_text(", ".join(parts) or "Empty folder")
+
+                spin.set_visibility(False)
+                _render_breadcrumb(brow, bucket, state, grid, tree_list, s3, dark)
+                await _render_tree(tree_list, s3, bucket, state, grid, brow, dark)
+
+            async def _on_cell_click(e) -> None:
+                col   = e.args.get("colId", "")
+                row   = e.args.get("data", {})
+                key   = row.get("key", "")
+                rtype = row.get("type", "")
+
+                # Navigation: folder / ".." on icon or name column
+                if col in ("col_icon", "col_name") and rtype != "file":
+                    _navigate(key, grid, tree_list, brow, s3, bucket, state, dark)
+                    return
+
+                # Per-row action columns
+                if   col == "act_preview" and rtype == "file":
+                    _pre_preview(row)
+                elif col == "act_dl"      and rtype == "file":
+                    _download_one(s3, bucket, key)
+                elif col == "act_copy"    and rtype != "up":
+                    _open_copy_dlg(copy_dlg, copy_dst_inp, copy_err,
+                                   state, C, single_key=key)
+                elif col == "act_rename"  and rtype == "file":
+                    _pre_rename(row, rename_dlg, rename_src, rename_inp)
+                elif col == "act_presign" and rtype == "file":
+                    _pre_presign(row, presign_dlg, presign_key, presign_url)
+                elif col == "act_del"     and rtype != "up":
+                    _delete_one(s3, bucket, row, modal,
+                                grid, tree_list, brow, state, dark)
+
+            grid.on("cellClicked", _on_cell_click)
+
+            async def _on_selection_change(_e) -> None:
+                rows = await grid.get_selected_rows()
+                state["selected"] = [r["key"] for r in rows
+                                     if r.get("type") == "file"]
+                n = len(state["selected"])
+                sel_lbl.set_text(f"{n} selected" if n else "0 selected")
+                bulk_del_btn.set_enabled(n > 0)
+
+            grid.on("selectionChanged", _on_selection_change)
+
+            # ── Bulk delete (chunked, with confirm dialog) ────────────────────
+            async def _delete_selected() -> None:
+                keys = list(state.get("selected", []))
+                if not keys:
+                    ui.notify("No files selected.", type="warning")
+                    return
+                n = len(keys)
+                ok_flag = await _confirm(
+                    title=f"Delete {n} object{'s' if n != 1 else ''}",
+                    body=(
+                        f"Permanently remove {n} "
+                        f"object{'s' if n != 1 else ''} from '{bucket}'? "
+                        "This cannot be undone."
+                    ),
+                )
+                if not ok_flag:
+                    return
+                loop = asyncio.get_event_loop()
+                deleted = failed = 0
+                for i in range(0, n, 1000):
+                    chunk = keys[i : i + 1000]
+                    try:
+                        resp = await loop.run_in_executor(
+                            None,
+                            lambda c=chunk: s3.delete_objects(
+                                bucket,
+                                [{"Key": k} for k in c],
+                            ),
+                        )
+                        errs = resp.get("Errors") or [] if isinstance(resp, dict) else []
+                        for err in errs:
+                            ui.notify(
+                                f"Failed: {err.get('Key')}: {err.get('Message')}",
+                                type="negative",
+                            )
+                            failed += 1
+                        deleted += len(chunk) - len(errs)
+                    except Exception as exc:
+                        ui.notify(f"Delete error: {exc}", type="negative")
+                        return
+                if deleted:
+                    ui.notify(
+                        f"Deleted {deleted} object{'s' if deleted != 1 else ''}."
+                        + (f" ({failed} failed)" if failed else ""),
+                        type="positive" if not failed else "warning",
+                    )
+                grid.run_grid_method("deselectAll")
+                state["selected"] = []
+                await _reload_grid(grid, count_lbl, s3, bucket, state,
+                                   tree_list, brow, dark)
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  DIALOGS
@@ -418,7 +696,7 @@ async def objects_page() -> None:
         async def _on_multi_upload(e):
             await _handle_upload(e.files, s3, bucket, state, modal,
                                  up_list, up_list_placeholder,
-                                 table, tree_list, brow, dark)
+                                 grid, tree_list, brow, dark)
 
         upload_widget = ui.upload(
             multiple=True,
@@ -463,7 +741,7 @@ async def objects_page() -> None:
                    "prefix": state["prefix"] + (fup_prefix_inp.value or "")}
             await _handle_upload(e.files, s3, bucket, dst, modal,
                                  fup_list, fup_placeholder,
-                                 table, tree_list, brow, dark)
+                                 grid, tree_list, brow, dark)
 
         fup_widget = ui.upload(
             multiple=True,
@@ -486,9 +764,10 @@ async def objects_page() -> None:
         folder_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(folder_dlg, dark)
-            _primary_btn("Create", lambda: _create_folder(s3, bucket, state, folder_inp.value,
-                                                           folder_dlg, folder_err,
-                                                           table, tree_list, brow, dark))
+            _primary_btn("Create", lambda: asyncio.ensure_future(_create_folder(
+                s3, bucket, state, folder_inp.value,
+                folder_dlg, folder_err,
+                grid, tree_list, brow, dark)))
 
     # ── 4. Rename / Move ───────────────────────────────────────────────────────
     with ui.dialog() as rename_dlg, _dlg_card(dark):
@@ -501,9 +780,10 @@ async def objects_page() -> None:
         rename_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(rename_dlg, dark)
-            _primary_btn("Rename", lambda: _rename(s3, bucket, state, rename_src.text, rename_inp.value,
-                                                    rename_dlg, rename_err, modal,
-                                                    table, tree_list, brow, dark))
+            _primary_btn("Rename", lambda: asyncio.ensure_future(_rename(
+                s3, bucket, state, rename_src.text, rename_inp.value,
+                rename_dlg, rename_err, modal,
+                grid, tree_list, brow, dark)))
 
     # ── 5. Copy ────────────────────────────────────────────────────────────────
     _copy_keys: list[str] = []   # mutable cell for lambda capture
@@ -520,9 +800,10 @@ async def objects_page() -> None:
         copy_err = _dlg_err()
         with ui.row().style("justify-content:flex-end; gap:8px; margin-top:12px;"):
             _cancel_btn(copy_dlg, dark)
-            _primary_btn("Copy", lambda: _copy_objects(s3, bucket, _copy_keys,
-                                                        copy_dst_inp.value, copy_dlg, copy_err,
-                                                        modal, table, tree_list, brow, state, dark))
+            _primary_btn("Copy", lambda: asyncio.ensure_future(_copy_objects(
+                s3, bucket, _copy_keys,
+                copy_dst_inp.value, copy_dlg, copy_err,
+                modal, grid, tree_list, brow, state, dark)))
 
     # ── 6. Cross-bucket copy ───────────────────────────────────────────────────
     _xb_keys: list[str] = []
@@ -686,7 +967,8 @@ async def objects_page() -> None:
                 folder_dlg.open()
             elif key == "r" or key == "R":
                 asyncio.ensure_future(
-                    _reload(table, tree_list, brow, s3, bucket, state, dark)
+                    _reload_grid(grid, count_lbl, s3, bucket, state,
+                                 tree_list, brow, dark)
                 )
             elif key == "Escape":
                 for dlg in (upload_dlg, folder_upload_dlg, copy_dlg,
@@ -697,150 +979,53 @@ async def objects_page() -> None:
     ui.keyboard(on_key=_on_key, ignore=[])
 
     # ── Initial load ──────────────────────────────────────────────────────────
-    await _reload(table, tree_list, brow, s3, bucket, state, dark)
+    await _reload_grid(grid, count_lbl, s3, bucket, state, tree_list, brow, dark)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
 #  Navigation + data loading
 # ═════════════════════════════════════════════════════════════════════════════
 
-def _apply_search(table, state: dict, query: str) -> None:
-    """Filter table rows in-place by name query (live search, no network call)."""
-    q = query.strip().lower()
-    all_rows = state.get("all_rows", [])
-    if q:
-        # Always keep the ".." navigation row at the top; filter everything else
-        nav   = [r for r in all_rows if r["type"] == "up"]
-        rest  = [r for r in all_rows if r["type"] != "up"
-                 and q in r["name"].lower()]
-        visible = nav + rest
-    else:
-        visible = list(all_rows)
-    table.rows.clear()
-    table.rows.extend(visible)
-    table.update()
+def _apply_search(grid, state: dict, query: str) -> None:
+    """Drive aggrid's built-in quick filter (name column only via getQuickFilterText)."""
+    grid.run_grid_method("setGridOption", "quickFilterText", query.strip())
 
 
 async def _reload(
-    table, tree_list, brow,
+    grid, tree_list, brow,
     s3, bucket: str, state: dict, dark: bool,
 ) -> None:
-    state["next_token"] = None  # reset pagination on full reload
-    page_size = state.get("page_size", 200)
+    """Reload current prefix into the aggrid and rebuild navigation widgets."""
     loop = asyncio.get_event_loop()
-    try:
-        data = await loop.run_in_executor(
-            None, lambda: s3.list_objects(
-                bucket, prefix=state["prefix"], max_keys=page_size,
-            )
-        )
-    except Exception as exc:
-        ui.notify(f"Error listing objects: {exc}", type="negative")
-        return
+    rows = await loop.run_in_executor(
+        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+    )
 
-    state["next_token"] = data.get("next_token")
-
-    rows: list[dict] = []
-
-    # ".." row when inside a sub-prefix
+    all_rows: list[dict] = []
     if state["prefix"]:
         parent = "/".join(state["prefix"].rstrip("/").split("/")[:-1])
         if parent:
             parent += "/"
-        rows.append({
+        all_rows.append({
             "key":   parent,
             "type":  "up",
             "name":  "..",
             "size":  "",
             "mtime": 0,
+            "etag":  "",
         })
+    all_rows.extend(rows)
 
-    # Folder rows
-    for pref in data["prefixes"]:
-        name = pref[len(state["prefix"]):]
-        rows.append({"key": pref, "type": "folder",
-                     "name": name, "size": "—", "mtime": 0})
+    state["all_rows"] = all_rows
+    grid.run_grid_method("setGridOption", "rowData", all_rows)
 
-    # File rows
-    for obj in data["objects"]:
-        key  = obj["Key"]
-        name = key[len(state["prefix"]):]
-        if not name:           # skip empty placeholder for current prefix
-            continue
-        lm = obj.get("LastModified")
-        rows.append({
-            "key":   key,
-            "type":  "file",
-            "name":  name,
-            "size":  humanize.naturalsize(obj.get("Size", 0)),
-            # epoch-ms so the JS slot can convert to browser local timezone
-            "mtime": int(lm.timestamp() * 1000) if lm else 0,
-        })
-
-    state["all_rows"] = list(rows)   # snapshot for live-search filtering
-    table.rows.clear()
-    table.rows.extend(rows)
-    table.update()
-
-    lmr = state.get("load_more_ref")
-    if lmr is not None:
-        lmr.set_visibility(bool(state["next_token"]))
-
-    _render_breadcrumb(brow, bucket, state, table, tree_list, s3, dark)
-    await _render_tree(tree_list, s3, bucket, state, table, brow, dark)
-
-
-async def _load_more(
-    table, tree_list, brow, load_more_row,
-    s3, bucket: str, state: dict, dark: bool,
-    page_size: int = 200,
-) -> None:
-    """Append the next page of objects to the table."""
-    token = state.get("next_token")
-    if not token:
-        load_more_row.set_visibility(False)
-        return
-
-    loop = asyncio.get_event_loop()
-    try:
-        data = await loop.run_in_executor(
-            None, lambda: s3.list_objects(
-                bucket, prefix=state["prefix"],
-                max_keys=page_size,
-                continuation_token=token,
-            )
-        )
-    except Exception as exc:
-        ui.notify(f"Error loading more: {exc}", type="negative")
-        return
-
-    state["next_token"] = data.get("next_token")
-
-    # Append file rows only (folders already shown from first page)
-    new_rows: list[dict] = []
-    for obj in data["objects"]:
-        key  = obj["Key"]
-        name = key[len(state["prefix"]):]
-        if not name:
-            continue
-        lm = obj.get("LastModified")
-        new_rows.append({
-            "key":   key,
-            "type":  "file",
-            "name":  name,
-            "size":  humanize.naturalsize(obj.get("Size", 0)),
-            "mtime": int(lm.timestamp() * 1000) if lm else 0,
-        })
-
-    state.setdefault("all_rows", []).extend(new_rows)  # keep snapshot in sync
-    table.rows.extend(new_rows)
-    table.update()
-    load_more_row.set_visibility(bool(state["next_token"]))
+    _render_breadcrumb(brow, bucket, state, grid, tree_list, s3, dark)
+    await _render_tree(tree_list, s3, bucket, state, grid, brow, dark)
 
 
 async def _render_tree(
     tree_list, s3, bucket: str, state: dict,
-    table, brow, dark: bool,
+    grid, brow, dark: bool,
 ) -> None:
     """Rebuild the left-panel folder tree: root + expanded active path."""
     tree_list.clear()
@@ -867,7 +1052,7 @@ async def _render_tree(
             with tree_list:
                 with ui.button(
                     on_click=lambda p=pref: _navigate(
-                        p, table, tree_list, brow, s3, bucket, state, dark
+                        p, grid, tree_list, brow, s3, bucket, state, dark
                     )
                 ).props("flat no-caps").style(
                     f"width:100%; justify-content:flex-start; background:{bg}; "
@@ -889,19 +1074,19 @@ async def _render_tree(
 
 def _navigate(
     prefix: str,
-    table, tree_list, brow,
+    grid, tree_list, brow,
     s3, bucket: str, state: dict, dark: bool,
 ) -> None:
     state["prefix"] = prefix
     app.storage.user["active_prefix"] = prefix
     asyncio.ensure_future(
-        _reload(table, tree_list, brow, s3, bucket, state, dark)
+        _reload(grid, tree_list, brow, s3, bucket, state, dark)
     )
 
 
 def _render_breadcrumb(
     brow, bucket: str, state: dict,
-    table, tree_list, s3, dark: bool,
+    grid, tree_list, s3, dark: bool,
 ) -> None:
     brow.clear()
     C = _pal(dark)
@@ -912,7 +1097,7 @@ def _render_breadcrumb(
         ui.button(
             bucket,
             on_click=lambda: _navigate(
-                "", table, tree_list, brow, s3, bucket, state, dark
+                "", grid, tree_list, brow, s3, bucket, state, dark
             ),
         ).props("flat dense no-caps").style(
             f"color:{C['blue']}; font-size:0.8rem; font-weight:600; padding:2px 6px;"
@@ -924,7 +1109,7 @@ def _render_breadcrumb(
             ui.button(
                 part,
                 on_click=lambda p=pref: _navigate(
-                    p, table, tree_list, brow, s3, bucket, state, dark
+                    p, grid, tree_list, brow, s3, bucket, state, dark
                 ),
             ).props("flat dense no-caps").style(
                 f"color:{C['blue']}; font-size:0.8rem; padding:2px 6px;"
@@ -942,7 +1127,7 @@ async def _handle_upload(
     modal:         ProgressModal,
     up_list,                      # ui.column for per-file rows
     placeholder,                  # label to hide on first file
-    table, tree_list, brow, dark: bool,
+    grid, tree_list, brow, dark: bool,
 ) -> None:
     """Sequentially upload one or more files with per-file progress."""
     total = len(upload_files)
@@ -1039,7 +1224,7 @@ async def _handle_upload(
         modal.update_total(idx + 1, total)
 
     modal.set_done(ok, err)
-    await _reload(table, tree_list, brow, s3, bucket, state, dark)
+    await _reload(grid, tree_list, brow, s3, bucket, state, dark)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1091,7 +1276,7 @@ async def _copy_objects(
     dst_prefix: str,
     dialog, err_lbl,
     modal: ProgressModal,
-    table, tree_list, brow, state: dict, dark: bool,
+    grid, tree_list, brow, state: dict, dark: bool,
 ) -> None:
     if not dst_prefix.strip():
         err_lbl.set_text("Destination prefix is required.")
@@ -1123,7 +1308,7 @@ async def _copy_objects(
         modal.update_total(i + 1, len(keys))
 
     modal.set_done(ok, err)
-    await _reload(table, tree_list, brow, s3, bucket, state, dark)
+    await _reload(grid, tree_list, brow, s3, bucket, state, dark)
 
 
 async def _xbucket_copy(
@@ -1176,7 +1361,7 @@ async def _rename(
     old_key: str, new_key_raw: str,
     dialog, err_lbl,
     modal: ProgressModal,
-    table, tree_list, brow, dark: bool,
+    grid, tree_list, brow, dark: bool,
 ) -> None:
     new_key = new_key_raw.strip().lstrip("/")
     if not new_key:
@@ -1208,7 +1393,7 @@ async def _rename(
         modal.add_log_entry(old_key, "error", str(exc))
         modal.set_done(0, 1)
 
-    await _reload(table, tree_list, brow, s3, bucket, state, dark)
+    await _reload(grid, tree_list, brow, s3, bucket, state, dark)
 
 
 def _pre_rename(row: dict, dlg, src_lbl, inp) -> None:
@@ -1225,7 +1410,7 @@ def _pre_rename(row: dict, dlg, src_lbl, inp) -> None:
 async def _delete_one(
     s3, bucket: str, row: dict,
     modal: ProgressModal,
-    table, tree_list, brow, state: dict, dark: bool,
+    grid, tree_list, brow, state: dict, dark: bool,
 ) -> None:
     key  = row.get("key", "")
     typ  = row.get("type", "file")
@@ -1272,13 +1457,13 @@ async def _delete_one(
             modal.add_log_entry(key, "error", str(exc))
             modal.set_done(0, 1)
 
-    await _reload(table, tree_list, brow, s3, bucket, state, dark)
+    await _reload(grid, tree_list, brow, s3, bucket, state, dark)
 
 
 async def _bulk_delete(
     s3, bucket: str, state: dict,
     modal: ProgressModal,
-    table, tree_list, brow, dark: bool,
+    grid, tree_list, brow, dark: bool,
 ) -> None:
     keys = state.get("selected", [])
     if not keys:
@@ -1310,7 +1495,7 @@ async def _bulk_delete(
 
     state["selected"] = []
     modal.set_done(ok, err)
-    await _reload(table, tree_list, brow, s3, bucket, state, dark)
+    await _reload(grid, tree_list, brow, s3, bucket, state, dark)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1320,7 +1505,7 @@ async def _bulk_delete(
 async def _create_folder(
     s3, bucket: str, state: dict,
     name: str, dialog, err_lbl,
-    table, tree_list, brow, dark: bool,
+    grid, tree_list, brow, dark: bool,
 ) -> None:
     if not name.strip():
         err_lbl.set_text("Folder name is required.")
@@ -1333,7 +1518,7 @@ async def _create_folder(
         )
         dialog.close()
         ui.notify(f"Folder '{name}' created.", type="positive")
-        await _reload(table, tree_list, brow, s3, bucket, state, dark)
+        await _reload(grid, tree_list, brow, s3, bucket, state, dark)
     except Exception as exc:
         err_lbl.set_text(str(exc))
 
