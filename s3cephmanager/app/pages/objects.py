@@ -207,54 +207,48 @@ _GRID_COLDEFS: list[dict] = [
 
 def fetch_objects(s3_client, bucket: str, prefix: str = "") -> list[dict]:
     """
-    One-level listing via list_objects_v2 with delimiter='/'.
-    Returns aggrid-ready row dicts (folders first, then files).
+    One-level listing via S3Manager.list_objects (wraps list_objects_v2
+    with delimiter='/').  Returns aggrid-ready row dicts (folders first,
+    then files).
     Blocking – always call inside run_in_executor.
 
-    NOTE: list_objects_v2 returns max 1 000 keys per call.
-    For buckets with >1 000 objects under a prefix, add a paginator loop
-    using resp['NextContinuationToken'] here when needed.
+    NOTE: S3Manager.list_objects caps at 1 000 keys per call.
+    For buckets with >1 000 objects under a prefix a paginator loop
+    using resp['next_token'] is needed.
+
+    Raises on error – do NOT call ui.notify here (runs in a thread).
     """
-    try:
-        resp = s3_client.list_objects_v2(
-            Bucket=bucket,
-            Prefix=prefix,
-            Delimiter="/",
-        )
-        rows: list[dict] = []
+    resp = s3_client.list_objects(bucket, prefix, "/")
+    rows: list[dict] = []
 
-        for cp in resp.get("CommonPrefixes") or []:
-            pref = cp["Prefix"]
-            rows.append({
-                "key":   pref,
-                "type":  "folder",
-                "name":  pref[len(prefix):],
-                "size":  "—",
-                "mtime": 0,
-                "etag":  "",
-            })
+    for pref in resp.get("prefixes") or []:
+        rows.append({
+            "key":   pref,
+            "type":  "folder",
+            "name":  pref[len(prefix):],
+            "size":  "—",
+            "mtime": 0,
+            "etag":  "",
+        })
 
-        for obj in resp.get("Contents") or []:
-            key = obj["Key"]
-            if key.endswith("/"):
-                continue
-            name = key[len(prefix):]
-            if not name:
-                continue
-            lm = obj.get("LastModified")
-            rows.append({
-                "key":   key,
-                "type":  "file",
-                "name":  name,
-                "size":  humanize.naturalsize(obj.get("Size", 0)),
-                "mtime": int(lm.timestamp() * 1000) if lm else 0,
-                "etag":  obj.get("ETag", "").strip('"'),
-            })
+    for obj in resp.get("objects") or []:
+        key = obj["Key"]
+        if key.endswith("/"):
+            continue
+        name = key[len(prefix):]
+        if not name:
+            continue
+        lm = obj.get("LastModified")
+        rows.append({
+            "key":   key,
+            "type":  "file",
+            "name":  name,
+            "size":  humanize.naturalsize(obj.get("Size", 0)),
+            "mtime": int(lm.timestamp() * 1000) if lm else 0,
+            "etag":  obj.get("ETag", "").strip('"'),
+        })
 
-        return rows
-    except Exception as exc:
-        ui.notify(f"Error fetching objects: {exc}", type="negative")
-        return []
+    return rows
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -542,9 +536,14 @@ async def objects_page() -> None:
                 """
                 spin.set_visibility(True)
                 loop = asyncio.get_event_loop()
-                rows = await loop.run_in_executor(
-                    None, lambda: fetch_objects(s3, bucket, state["prefix"])
-                )
+                try:
+                    rows = await loop.run_in_executor(
+                        None, lambda: fetch_objects(s3, bucket, state["prefix"])
+                    )
+                except Exception as exc:
+                    spin.set_visibility(False)
+                    ui.notify(f"Error fetching objects: {exc}", type="negative")
+                    return
 
                 # Prepend ".." navigation row when inside a sub-prefix
                 all_rows: list[dict] = []
