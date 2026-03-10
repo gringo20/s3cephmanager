@@ -1,171 +1,73 @@
-NiceGUI ready to go on http://localhost:8080, and http://10.42.6.215:8080
-2026-03-09T21:17:40 [INFO] cephs3mgr.main: Starting CephS3Manager-Web on 0.0.0.0:8080
-2026-03-09T21:17:40 [INFO] cephs3mgr.main: Database initialised
-2026-03-09T21:18:23 [ERROR] nicegui: JavaScript did not respond within 1.0 s
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
-    await fut
-asyncio.exceptions.CancelledError
+## Workflow Orchestration
 
-The above exception was the direct cause of the following exception:
+### 1. Plan Mode Default
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
-    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
-    async with timeouts.timeout(timeout):
-               ~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
-    raise TimeoutError from exc_val
-TimeoutError
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)  
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing  
+- Use plan mode for verification steps, not just building  
+- Write detailed specs upfront to reduce ambiguity  
 
-The above exception was the direct cause of the following exception:
+---
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
-    await result
-  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
-    self.value = await context.client.run_javascript(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
-    return await JavaScriptRequest(request_id, timeout=timeout)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
-    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
-TimeoutError: JavaScript did not respond within 1.0 s
-2026-03-09T21:18:36 [ERROR] nicegui: JavaScript did not respond within 1.0 s
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
-    await fut
-asyncio.exceptions.CancelledError
+### 2. Subagent Strategy
 
-The above exception was the direct cause of the following exception:
+- Use subagents liberally to keep main context window clean  
+- Offload research, exploration, and parallel analysis to subagents  
+- For complex problems, throw more compute at it via subagents  
+- One task per subagent for focused execution  
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
-    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
-    async with timeouts.timeout(timeout):
-               ~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
-    raise TimeoutError from exc_val
-TimeoutError
+---
 
-The above exception was the direct cause of the following exception:
+### 3. Self-Improvement Loop
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
-    await result
-  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
-    self.value = await context.client.run_javascript(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
-    return await JavaScriptRequest(request_id, timeout=timeout)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
-    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
-TimeoutError: JavaScript did not respond within 1.0 s
-2026-03-09T21:18:42 [ERROR] nicegui: JavaScript did not respond within 1.0 s
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
-    await fut
-asyncio.exceptions.CancelledError
+- After ANY correction from the user: update tasks/lessons.md with the pattern  
+- Write rules for yourself that prevent the same mistake  
+- Ruthlessly iterate on these lessons until mistake rate drops  
+- Review lessons at session start for relevant project  
 
-The above exception was the direct cause of the following exception:
+---
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
-    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
-    async with timeouts.timeout(timeout):
-               ~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
-    raise TimeoutError from exc_val
-TimeoutError
+### 4. Verification Before Done
 
-The above exception was the direct cause of the following exception:
+- Never mark a task complete without proving it works  
+- Diff behavior between main and your changes when relevant  
+- Ask yourself: "Would a staff engineer approve this?"  
+- Run tests, check logs, demonstrate correctness  
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
-    await result
-  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
-    self.value = await context.client.run_javascript(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
-    return await JavaScriptRequest(request_id, timeout=timeout)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
-    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
-TimeoutError: JavaScript did not respond within 1.0 s
-2026-03-09T21:18:44 [ERROR] nicegui: JavaScript did not respond within 1.0 s
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/locks.py", line 213, in wait
-    await fut
-asyncio.exceptions.CancelledError
+---
 
-The above exception was the direct cause of the following exception:
+### 5. Demand Elegance (Balanced)
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 28, in __await__
-    yield from asyncio.wait_for(self._event.wait(), self.timeout).__await__()
-  File "/usr/local/lib/python3.13/asyncio/tasks.py", line 506, in wait_for
-    async with timeouts.timeout(timeout):
-               ~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/usr/local/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
-    raise TimeoutError from exc_val
-TimeoutError
+- For non-trivial changes: pause and ask "Is there a more elegant way?"  
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"  
+- Skip this for simple, obvious fixes — don't over-engineer  
+- Challenge your own work before presenting it  
 
-The above exception was the direct cause of the following exception:
+---
 
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.13/site-packages/nicegui/background_tasks.py", line 91, in _handle_exceptions
-    task.result()
-    ~~~~~~~~~~~^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 378, in result_with_client
-    await result
-  File "/usr/local/lib/python3.13/site-packages/nicegui/elements/drawer.py", line 60, in _request_value
-    self.value = await context.client.run_javascript(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        f'!getHtmlElement({self.id}).parentElement.classList.contains("q-layout--prevent-focus")  // __IS_DRAWER_OPEN__'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/client.py", line 251, in send_and_wait
-    return await JavaScriptRequest(request_id, timeout=timeout)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/site-packages/nicegui/javascript_request.py", line 30, in __await__
-    raise TimeoutError(f'JavaScript did not respond within {self.timeout:.1f} s') from e
-TimeoutError: JavaScript did not respond within 1.0 s
+### 6. Autonomous Bug Fixing
+
+- When given a bug report: just fix it. Don't ask for hand-holding  
+- Point at logs, errors, failing tests — then resolve them  
+- Zero context switching required from the user  
+- Go fix failing CI tests without being told how  
+
+---
+
+## Task Management
+
+1. Plan First: Write plan to tasks/todo.md with checkable items  
+2. Verify Plan: Check in before starting implementation  
+3. Track Progress: Mark items complete as you go  
+4. Explain Changes: High-level summary at each step  
+5. Document Results: Add review section to tasks/todo.md  
+6. Capture Lessons: Update tasks/lessons.md after corrections  
+
+---
+
+## Core Principles
+
+- Simplicity First: Make every change as simple as possible. Impact minimal code.  
+- No Laziness: Find root causes. No temporary fixes. Senior developer standards.  
+- Minimal Impact: Changes should only touch what's necessary. Avoid introducing bugs.
+ 
