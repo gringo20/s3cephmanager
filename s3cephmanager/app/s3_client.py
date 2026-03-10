@@ -205,12 +205,14 @@ class S3Manager:
             ExpiresIn=expiry,
         )
 
-    def presigned_url_inline(self, bucket: str, key: str, expiry: int = 600) -> str:
+    def presigned_url_inline(self, bucket: str, key: str, expiry: int = 600,
+                             content_type: str | None = None) -> str:
         """Presigned URL without Content-Disposition so the browser renders inline."""
+        params: dict = {"Bucket": bucket, "Key": key}
+        if content_type:
+            params["ResponseContentType"] = content_type
         return self._presign_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": key},
-            ExpiresIn=expiry,
+            "get_object", Params=params, ExpiresIn=expiry,
         )
 
     def presigned_upload_url(self, bucket: str, key: str, expiry: int = 3600) -> str:

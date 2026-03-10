@@ -77,20 +77,22 @@ async def _preview_proxy_route(token: str):
     receives the correct MIME type even when Ceph/S3 returns 'application/octet-stream'.
     """
     import requests as _req
+    from fastapi.responses import StreamingResponse as _StreamingResponse
     entry = _preview_tokens.get(token)
     if not entry:
         return _FastAPIResponse(status_code=404, content=b"Preview not found or expired.")
-    purl     = entry["url"]
+    purl      = entry["url"]
     forced_ct = entry["ct"]
+    print(f"[preview] proxy fetching: {purl}")
     loop = asyncio.get_event_loop()
     try:
         r = await loop.run_in_executor(
-            None, lambda: _req.get(purl, timeout=60, verify=False)
+            None, lambda: _req.get(purl, timeout=60, verify=False, stream=True)
         )
         r.raise_for_status()
-        return _FastAPIResponse(
-            content=r.content,
-            media_type=forced_ct,          # ← always use our stored type, not Ceph's
+        return _StreamingResponse(
+            r.iter_content(chunk_size=65536),
+            media_type=forced_ct,
             headers={"Content-Disposition": "inline", "Cache-Control": "no-store"},
         )
     except Exception as exc:
@@ -109,8 +111,6 @@ _ACT_STYLE = (
 _GRID_COLDEFS: list[dict] = [
     # Checkbox + type icon
     {
-        "headerCheckboxSelection": True,
-        "checkboxSelection": True,
         "headerName": "",
         "colId": "col_icon",
         "field": "type",
@@ -132,7 +132,7 @@ _GRID_COLDEFS: list[dict] = [
         "headerName": "Name",
         "colId": "col_name",
         "field": "name",
-        "flex": 1, "minWidth": 200,
+        "minWidth": 200,
         "sortable": True, "filter": True,
         ":getQuickFilterText": "(p) => p.data.name",
         ":cellRenderer": r"""(p) => {
@@ -343,7 +343,7 @@ async def objects_page() -> None:
         # content exceeds the flex-container height (calc(100vh - 56px)).
         with ui.column().style(
             "flex:1; min-width:0; min-height:0; padding:18px 22px; gap:12px; "
-            "overflow:hidden;"
+            "overflow-y:auto; flex-direction:column;"
         ):
 
             # Top bar
@@ -372,26 +372,13 @@ async def objects_page() -> None:
                         f"color:{C['txt']}; font-size:1.15rem; font-weight:700;"
                     )
 
-                with ui.row().style("gap:6px; align-items:center;"):
-                    search = ui.input(
-                        placeholder="Quick filter…",
-                    ).props(
-                        ("dense outlined clearable dark"
-                         if dark else "dense outlined clearable")
-                    ).style(_inp(dark) + "width:200px;")
-                    search.on(
-                        "update:model-value",
-                        lambda e: grid.run_grid_method(
-                            "setGridOption", "quickFilterText", e.args or ""
-                        ),
-                    )
-                    ui.button(
-                        icon="refresh",
-                        on_click=lambda: asyncio.ensure_future(
-                            _reload_grid(grid, count_lbl, s3, bucket, state,
-                                         tree_list, brow, dark)
-                        ),
-                    ).props("flat round").style(f"color:{C['mut']};")
+                ui.button(
+                    icon="refresh",
+                    on_click=lambda: asyncio.ensure_future(
+                        _reload_grid(grid, count_lbl, s3, bucket, state,
+                                     tree_list, brow, dark)
+                    ),
+                ).props("flat round").style(f"color:{C['mut']};")
 
             # Breadcrumb (re-rendered on every navigate)
             brow = ui.row().style("align-items:center; gap:2px; flex-wrap:wrap;")
@@ -471,27 +458,38 @@ async def objects_page() -> None:
                 options={
                     "columnDefs": _GRID_COLDEFS,
                     "rowData": [],
-                    "rowSelection": "multiple",
-                    "suppressRowClickSelection": True,
-                    # Pagination – AG Grid handles client-side paging
+                    "rowSelection": {
+                        "mode": "multiRow",
+                        "checkboxes": True,
+                        "headerCheckbox": True,
+                        "enableClickSelection": False,
+                    },
                     "pagination": True,
                     "paginationPageSize": 50,
-                    ":paginationPageSizeSelector": "[25, 50, 100, 250]",
-                    "domLayout": "normal",
-                    "rowHeight": 35,
+                    "paginationPageSizeSelector": [25, 50, 100, 250],
+                    "domLayout": "autoHeight",
+                    "suppressNoRowsOverlay": False,
+                    "rowHeight": 36,
                     "animateRows": False,
                     "suppressMovableColumns": True,
                     "suppressCellFocus": True,
                     "defaultColDef": {"resizable": True},
-                    "overlayNoRowsTemplate": (
-                        f'<span style="color:{C["mut"]};font-size:0.9rem">'
-                        "Empty folder</span>"
-                    ),
+                    "overlayNoRowsTemplate": '<span style="color:#8b949e;font-size:1rem">Empty folder or loading...</span>',
                 },
-            ).style(
-                f"width:100%; height:calc(100vh - 310px); min-height:200px; "
-                f"border:1px solid {C['bdr']}; border-radius:10px; overflow:hidden;"
-            )
+            ).classes("w-full border rounded flex-grow min-h-[300px] overflow-auto")
+
+            ui.add_body_html(f"""<script>
+(function() {{
+    var _resizeTimer;
+    window.addEventListener('resize', function() {{
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(function() {{
+            var comp = getElement({grid.id});
+            if (comp && comp.api) comp.api.sizeColumnsToFit();
+        }}, 150);
+    }});
+}})();
+</script>""")
 
             # ── Shared confirm dialog (reused for delete / overwrite prompts) ──
             with ui.dialog() as _confirm_dlg, ui.card().style(
@@ -574,8 +572,11 @@ async def objects_page() -> None:
                 all_rows.extend(rows)
                 state["all_rows"] = all_rows
 
-                # NiceGUI-native update (reliable across all AG Grid versions)
                 grid.options["rowData"] = all_rows
+                grid.run_grid_method("setGridOption", "rowData", all_rows)
+                grid.run_grid_method("sizeColumnsToFit")
+                grid.run_grid_method("resetRowHeights")
+                grid.run_grid_method("redrawRows")
                 grid.update()
 
                 n_files = sum(1 for r in all_rows if r["type"] == "file")
@@ -615,8 +616,8 @@ async def objects_page() -> None:
                 elif col == "act_presign" and rtype == "file":
                     _pre_presign(row, presign_dlg, presign_key, presign_url)
                 elif col == "act_del"     and rtype != "up":
-                    _delete_one(s3, bucket, row, modal,
-                                grid, tree_list, brow, state, dark)
+                    asyncio.ensure_future(_delete_one(s3, bucket, row, modal,
+                                                      grid, tree_list, brow, state, dark))
 
             grid.on("cellClicked", _on_cell_click)
 
@@ -1031,7 +1032,7 @@ async def _reload(
 
     state["all_rows"] = all_rows
     grid.options["rowData"] = all_rows
-    grid.update()
+    await grid.run_grid_method("setGridOption", "rowData", all_rows)
 
     _render_breadcrumb(brow, bucket, state, grid, tree_list, s3, dark)
     await _render_tree(tree_list, s3, bucket, state, grid, brow, dark)
@@ -1674,7 +1675,18 @@ async def _show_preview(
 
         # ── Text / Code ───────────────────────────────────────────────────────
         elif ext in _PREVIEW_TEXT_EXTS:
-            # Show spinner while fetching content server-side
+            # Re-generate URL with forced text/plain so Ceph doesn't return octet-stream
+            try:
+                url = await loop.run_in_executor(
+                    None, lambda: s3.presigned_url_inline(
+                        bucket, key, expiry=600,
+                        content_type="text/plain; charset=utf-8",
+                    )
+                )
+            except Exception:
+                pass  # fall back to original url
+            print(f"[preview] fetching text url: {url}")
+
             status_col = ui.column().style(
                 "width:100%; align-items:center; padding:52px 0; gap:10px;"
             )
